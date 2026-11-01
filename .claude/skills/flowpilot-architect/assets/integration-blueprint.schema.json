@@ -454,7 +454,8 @@
             "items": {
               "type": "string",
               "pattern": "^REQ-[0-9]{3,}$"
-            }
+            },
+            "uniqueItems": true
           }
         }
       }
