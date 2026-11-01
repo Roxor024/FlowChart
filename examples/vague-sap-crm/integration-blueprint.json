@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "0.4.0",
+  "project": "Scenario D — connect SAP and CRM (vague request)",
+  "status": "provisional",
+  "reviewStatus": "unreviewed",
+  "summary": "The request names two systems and a platform only. No design is proposed until the questions are answered; no components or tests are invented.",
+  "dataClassification": "unknown",
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "title": "Connect SAP and the CRM using Azure",
+      "status": "confirmed",
+      "type": "functional",
+      "source": "User request: 'Connect SAP and our CRM in Azure.'"
+    },
+    {
+      "id": "REQ-002",
+      "title": "Business objects, direction and system of record",
+      "status": "unknown",
+      "type": "functional"
+    },
+    {
+      "id": "REQ-003",
+      "title": "Latency / frequency (real-time, near-real-time, batch)",
+      "status": "unknown",
+      "type": "nonfunctional"
+    },
+    {
+      "id": "REQ-004",
+      "title": "Connectivity to SAP (cloud or on-premises, network path)",
+      "status": "unknown",
+      "type": "nonfunctional"
+    },
+    {
+      "id": "REQ-005",
+      "title": "Data classification and residency",
+      "status": "unknown",
+      "type": "nonfunctional"
+    }
+  ],
+  "components": [],
+  "decisions": [],
+  "implementationTasks": [],
+  "testCases": [],
+  "risks": [],
+  "openQuestions": [
+    {
+      "id": "QUE-001",
+      "title": "Which SAP system (S/4HANA or ECC; cloud or on-premises) and which CRM product?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-001"
+      ]
+    },
+    {
+      "id": "QUE-002",
+      "title": "Which business objects flow, in which direction, and which system is master for each?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-002"
+      ]
+    },
+    {
+      "id": "QUE-003",
+      "title": "How fresh must data be: seconds, minutes or daily batch?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-003"
+      ]
+    },
+    {
+      "id": "QUE-004",
+      "title": "What network path to SAP exists (ExpressRoute, VPN, on-premises data gateway)?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-004"
+      ]
+    },
+    {
+      "id": "QUE-005",
+      "title": "Does the data include personal or restricted information?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-005"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "operations": {
+    "monitoring": [],
+    "alerts": [],
+    "tracing": [],
+    "recovery": [],
+    "maintenance": [],
+    "owners": []
+  }
+}
