@@ -9,7 +9,7 @@ Describe an integration requirement; FlowPilot clarifies constraints, proposes p
 From the repo root:
 ```bash
 cd .claude/skills
-zip -r ../../../flowpilot-architect-v0.3.zip flowpilot-architect
+zip -r ../../flowpilot-architect-v0.3.zip flowpilot-architect
 ```
 Upload the ZIP as a Claude custom Skill. ZIP root must contain `flowpilot-architect/SKILL.md`, `assets/integration-blueprint.schema.json`, `assets/example-blueprint.json`, `scripts/validate_blueprint.py`, and `references/`. When code execution or `jsonschema` is unavailable, report that full validation was not executed. This project does not rely on ChatGPT ZIP downloads.
 
