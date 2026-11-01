@@ -1,15 +1,18 @@
-# FlowPilot v0.3 — report presentation and artifact contract
+# Human-readable output contract (v0.4)
 
-Present a readable executive-first report:
-1. Executive overview: requirement, proposal, business impact, confidence, unresolved questions.
-2. Requirements table with clear status and measurable acceptance criteria.
-3. Architecture diagram (Mermaid) and component responsibilities, Azure service/SKU assumptions, trust boundaries.
-4. Alternatives and architecture decisions with rationale and tradeoffs.
-5. Ordered implementation playbook including prerequisites, verification and rollback.
-6. Tests with expected results and actual execution state; evidence only when truly executed.
-7. Prioritized risks with severity, mitigation and ownership.
-8. Monitoring, alerts, runbooks, recovery and maintenance responsibilities.
-9. Approval and machine validation state, prominently distinguished.
-10. Blueprint JSON in a separate downloadable file or appendix, matching the schema exactly.
+Produce an architect-friendly report, not a transcript. Build it from the blueprint so both state the same facts.
 
-Use short sentences, legible headings, responsive tables and print-friendly styling. Do not overload the first page. The generated HTML is an overview from blueprint data, not a substitute for a verified architecture diagram. The default report generator escapes user-supplied content.
+1. **Cover:** project, platform, skill and schema version, blueprint status (provisional/draft/approved), review status, validation status.
+2. **Executive summary:** problem, proposed solution, why, confidence, and the three decisions or questions that need attention.
+3. **Requirements:** confirmed, assumed, unknown, conflicting — each with ID and acceptance criteria. At most five questions asked now; the rest are recorded.
+4. **Conflicts:** each open conflict with why it conflicts and the options.
+5. **Architecture:** Mermaid diagram, component responsibility table with Azure service and tier assumptions, trust boundaries, one alternative with trade-offs.
+6. **Decisions (ADRs):** rationale, rejected alternative, trade-off, status.
+7. **Build plan:** numbered tasks with prerequisites, dependencies, exact verification and rollback.
+8. **Tests:** case, type, expected result, execution status. Evidence only for real executions; never fake a pass.
+9. **Risk register:** severity, evidence, mitigation, owner role.
+10. **Operations:** metrics, alerts with thresholds, tracing, DLQ recovery and replay, maintenance, owners.
+11. **Verification status:** validation result (or NOT EXECUTED and why), deployment not performed, human review state — visually separate from proposals.
+12. **Appendix:** full blueprint JSON, references, starter artifacts (labelled unverified).
+
+Style: short paragraphs, informative headings, narrow tables, print-friendly. When local scripts are available, `scripts/render_report.py <blueprint> <report.html>` produces an escaped HTML overview of the blueprint; it does not replace the written report or a verified diagram.
