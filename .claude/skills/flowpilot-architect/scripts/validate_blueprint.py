@@ -54,7 +54,7 @@ def validate(doc,schema):
         import jsonschema
         checker=jsonschema.Draft202012Validator(schema,format_checker=jsonschema.FormatChecker())
         structural=sorted(checker.iter_errors(doc),key=lambda e:list(map(str,e.absolute_path)))
-        if structural:return ["schema "+"/".join(map(str,e.absolute_path))+": "+e.message for e in structural],False
+        if structural:return ["schema "+"/".join(map(str,e.absolute_path))+": "+e.message for e in structural],True
     except ImportError:return ["full validation NOT EXECUTED: jsonschema unavailable"],False
     except Exception as ex:return ["schema processing error: "+type(ex).__name__+": "+str(ex)],False
     try:return semantic(doc),True
