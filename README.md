@@ -1,26 +1,31 @@
-# FlowPilot v0.2
+# FlowPilot v0.3 — Azure Integration Engineering Skill
 
-Azure-first **enterprise integration engineering assistant** for Claude Code and Claude.ai. An internal-pilot prototype, not an integration runtime or deployment system.
+An **Azure-first integration design and review assistant** for Claude Code and Claude Desktop / Claude.ai. No automatic cloud deployment.
 
-## What it does
-Turns business integration requirements into clarified specifications, a recommended Azure architecture with alternatives, an implementation plan, test cases, risk register and maintenance runbook. It retains a structured integration blueprint and emphasizes readable reports.
+## Experience
+Describe an integration requirement; FlowPilot clarifies constraints, proposes patterns, documents tradeoffs and produces a structured blueprint plus human-readable architecture, build, test and operations guidance. Documents remain draft until human review.
+
+## Claude Desktop / Claude.ai packaging
+From the repo root:
+```bash
+cd .claude/skills
+zip -r ../../flowpilot-architect-v0.3.zip flowpilot-architect
+```
+Upload the ZIP as a Claude custom Skill. ZIP root must contain `flowpilot-architect/SKILL.md`, `assets/integration-blueprint.schema.json`, `assets/example-blueprint.json`, `scripts/validate_blueprint.py`, and `references/`. When code execution or `jsonschema` is unavailable, report that full validation was not executed. This project does not rely on ChatGPT ZIP downloads.
 
 ## Claude Code
-Clone this repository and start `claude` in its root. Invoke `/flowpilot-architect` and supply the scenario from `examples/order-processing/SCENARIO.md`.
+Clone branch `flowpilot-v0.3`, start Claude Code at repository root, invoke `/flowpilot-architect`.
 
-## Claude.ai
-Package the `.claude/skills/flowpilot-architect` folder with `SKILL.md` at the skill-folder root, ZIP it, and upload as a custom Skill in Claude.ai. The chat environment may not be able to execute local validators; it must report validation not executed.
-
-## Local checks
-```sh
+## Test locally
+```bash
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v
 python tools/validate_blueprint.py examples/order-processing/integration-blueprint.json
 python tools/render_report.py examples/order-processing/integration-blueprint.json output/order-processing-report.html
 ```
-
-## Safety / scope
-No Azure deployment. Use only synthetic or authorized sanitized data. Never store credentials in blueprints. Human approval is separate from generated advice. See `docs/SECURITY.md`.
+Then open `output/order-processing-report.html` in a browser.
 
 ## Status
-GitHub pilot branch; validate and review artifacts before use. Not yet independently tested across both Claude hosts.
+**Prototype**: no customer data, no deployments, no production claims. Validator checks format and evidence fields, not the authenticity of a human or actual test execution. Authenticated organization approvals and tamper-evident records require a future platform service. Independent tests in Claude Desktop and Claude Code still required.
+
+This repository is public. Do not upload employer/customer information.

@@ -1,0 +1,246 @@
+{
+  "schemaVersion": "0.3.0",
+  "project": "Order Processing — synthetic Azure integration",
+  "status": "provisional",
+  "reviewStatus": "unreviewed",
+  "summary": "Receive orders reliably, buffer ERP outages and avoid duplicate business processing. Proposed only; no resources deployed.",
+  "dataClassification": "unknown",
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "title": "Accept order requests through REST",
+      "status": "confirmed",
+      "type": "functional",
+      "acceptanceCriteria": "A caller receives a durable acceptance identifier only after recording the request"
+    },
+    {
+      "id": "REQ-002",
+      "title": "Process 20,000 orders per day",
+      "status": "confirmed",
+      "type": "nonfunctional",
+      "acceptanceCriteria": "Sustain 20,000 synthetic accepted orders in a 24-hour load test with peak capacity measured separately"
+    },
+    {
+      "id": "REQ-003",
+      "title": "Tolerate ERP outages of 45 minutes",
+      "status": "confirmed",
+      "type": "nonfunctional",
+      "acceptanceCriteria": "Pending orders remain recoverable after a simulated 45-minute ERP outage"
+    },
+    {
+      "id": "REQ-004",
+      "title": "Prevent duplicate ERP business processing",
+      "status": "confirmed",
+      "type": "functional",
+      "acceptanceCriteria": "Replaying a confirmed order does not create a second ERP order"
+    },
+    {
+      "id": "REQ-005",
+      "title": "Deliver accepted orders to ERP",
+      "status": "confirmed",
+      "type": "functional",
+      "acceptanceCriteria": "A successfully processed order is correlated to exactly one ERP business record; retries reconcile uncertain outcomes"
+    },
+    {
+      "id": "REQ-006",
+      "title": "Define target end-to-end processing latency",
+      "status": "unknown",
+      "type": "nonfunctional"
+    }
+  ],
+  "components": [
+    {
+      "id": "CMP-001",
+      "title": "API Management",
+      "requirementIds": [
+        "REQ-001"
+      ],
+      "azureService": "Azure API Management",
+      "responsibility": "Authenticate, throttle, route and correlate"
+    },
+    {
+      "id": "CMP-002",
+      "title": "Order intake and state store",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-004"
+      ],
+      "azureService": "Azure Functions and transactional data store",
+      "responsibility": "Atomic insert-if-absent and durable acceptance via an outbox"
+    },
+    {
+      "id": "CMP-003",
+      "title": "Queue and outbox relay",
+      "requirementIds": [
+        "REQ-002",
+        "REQ-003",
+        "REQ-005"
+      ],
+      "azureService": "Azure Service Bus",
+      "responsibility": "Durable messaging with retry and dead-letter handling"
+    },
+    {
+      "id": "CMP-004",
+      "title": "ERP processing worker",
+      "requirementIds": [
+        "REQ-004",
+        "REQ-005"
+      ],
+      "azureService": "Azure Functions or Container Apps",
+      "responsibility": "Lease-safe monotonic state transitions, ERP idempotency and reconciliation"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "ADR-001",
+      "title": "Asynchronous order processing",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-003",
+        "REQ-005"
+      ],
+      "rationale": "ERP may be unavailable while intake remains available",
+      "alternative": "Synchronous direct ERP call",
+      "tradeoff": "202 means accepted rather than completed",
+      "status": "proposed"
+    },
+    {
+      "id": "ADR-002",
+      "title": "Transactional outbox and idempotent consumer",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-004",
+        "REQ-005"
+      ],
+      "rationale": "Avoid state-write race and persistence/enqueue gap",
+      "alternative": "Enqueue before persistence",
+      "tradeoff": "Additional storage and reconciliation lifecycle",
+      "status": "proposed"
+    }
+  ],
+  "implementationTasks": [
+    {
+      "id": "IMP-001",
+      "title": "Design intake transaction and idempotency key",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-004"
+      ],
+      "componentIds": [
+        "CMP-002"
+      ],
+      "verification": "Review insert-if-absent and outbox atomicity tests",
+      "rollback": "Do not expose endpoint until verified"
+    },
+    {
+      "id": "IMP-002",
+      "title": "Configure queue, worker retries and DLQ",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-005"
+      ],
+      "componentIds": [
+        "CMP-003",
+        "CMP-004"
+      ],
+      "dependsOn": [
+        "IMP-001"
+      ],
+      "verification": "Demonstrate outage, retry and reconciliation",
+      "rollback": "Pause consumer and preserve messages"
+    }
+  ],
+  "testCases": [
+    {
+      "id": "TST-001",
+      "title": "ERP unavailable for 45 minutes",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-005"
+      ],
+      "status": "not_run",
+      "expectedResult": "Orders stay recoverable and are processed or reconciled when ERP returns"
+    },
+    {
+      "id": "TST-002",
+      "title": "Duplicate submission",
+      "requirementIds": [
+        "REQ-004"
+      ],
+      "status": "not_run",
+      "expectedResult": "One ERP business order and a stable idempotency result"
+    },
+    {
+      "id": "TST-003",
+      "title": "Daily throughput test",
+      "requirementIds": [
+        "REQ-002"
+      ],
+      "status": "not_run",
+      "expectedResult": "20,000 accepted orders in 24 hours in approved test environment"
+    },
+    {
+      "id": "TST-004",
+      "title": "Durable acceptance test",
+      "requirementIds": [
+        "REQ-001"
+      ],
+      "status": "not_run",
+      "expectedResult": "No acceptance acknowledgment before durable store commit"
+    }
+  ],
+  "risks": [
+    {
+      "id": "RSK-001",
+      "title": "ERP idempotency contract unconfirmed",
+      "requirementIds": [
+        "REQ-004",
+        "REQ-005"
+      ],
+      "severity": "high",
+      "mitigation": "Confirm ERP external reference support and implement reconciliation",
+      "owner": "TBD",
+      "evidence": "Business requirement, ERP documentation pending"
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "QUE-001",
+      "title": "What is peak orders per second?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-002"
+      ]
+    },
+    {
+      "id": "QUE-002",
+      "title": "What is the expected ERP idempotency mechanism?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-004",
+        "REQ-005"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "operations": {
+    "monitoring": [
+      "Accepted-to-completed lag",
+      "Queue age",
+      "Outbox backlog",
+      "Processing failures"
+    ],
+    "alerts": [
+      "DLQ growth",
+      "Backlog exceeds outage budget"
+    ],
+    "recovery": [
+      "Quarantine poison messages",
+      "Replay only after idempotency review",
+      "Reconcile uncertain ERP outcomes"
+    ],
+    "owners": [
+      "Integration operations: TBD"
+    ]
+  }
+}

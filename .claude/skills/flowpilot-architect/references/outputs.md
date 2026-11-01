@@ -1,16 +1,15 @@
-# Human-readable output contract
+# FlowPilot v0.3 — report presentation and artifact contract
 
-Produce an architect-friendly report, not a raw AI transcript.
+Present a readable executive-first report:
+1. Executive overview: requirement, proposal, business impact, confidence, unresolved questions.
+2. Requirements table with clear status and measurable acceptance criteria.
+3. Architecture diagram (Mermaid) and component responsibilities, Azure service/SKU assumptions, trust boundaries.
+4. Alternatives and architecture decisions with rationale and tradeoffs.
+5. Ordered implementation playbook including prerequisites, verification and rollback.
+6. Tests with expected results and actual execution state; evidence only when truly executed.
+7. Prioritized risks with severity, mitigation and ownership.
+8. Monitoring, alerts, runbooks, recovery and maintenance responsibilities.
+9. Approval and machine validation state, prominently distinguished.
+10. Blueprint JSON in a separate downloadable file or appendix, matching the schema exactly.
 
-1. Cover: project, platform, version, draft status, review/validation status.
-2. Executive summary: problem, proposed solution, why, 3 decisions needing attention.
-3. Requirements: confirmed, assumptions, blocking unknowns (no more than five questions asked at once).
-4. Architecture: clear Mermaid diagram, plain-language component responsibility table, one alternative with tradeoffs.
-5. Decisions (ADRs): rationale, rejected alternative, acceptance conditions.
-6. Build: numbered, checkable implementation tasks, prerequisites, exact verification and rollback guidance.
-7. Testing: test case, expected result, evidence and execution status; never fake pass.
-8. Risk register: severity, evidence, mitigation, owner/decision required.
-9. Operations: metrics, alerts, tracing, DLQ recovery, maintenance and change process.
-10. Appendix: full blueprint JSON, references and generated starter artifacts.
-
-Keep paragraphs short, avoid horizontal wide tables, use informative headings, and present a readable HTML/Markdown report when the host allows. Clearly separate proposals from proven tests.
+Use short sentences, legible headings, responsive tables and print-friendly styling. Do not overload the first page. The generated HTML is an overview from blueprint data, not a substitute for a verified architecture diagram. The default report generator escapes user-supplied content.
