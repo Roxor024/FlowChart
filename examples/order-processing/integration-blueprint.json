@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "0.2.0",
+  "project": "Synthetic order-processing integration",
+  "status": "draft",
+  "reviewStatus": "unreviewed",
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "title": "Durably accept REST orders",
+      "status": "confirmed",
+      "acceptanceCriteria": "Return 202 only after durable acceptance"
+    },
+    {
+      "id": "REQ-002",
+      "title": "Prevent duplicate ERP business processing",
+      "status": "confirmed",
+      "acceptanceCriteria": "Replay cannot create duplicate ERP orders"
+    }
+  ],
+  "components": [
+    {
+      "id": "CMP-001",
+      "title": "Azure API Management and intake API",
+      "requirementIds": [
+        "REQ-001"
+      ]
+    },
+    {
+      "id": "CMP-002",
+      "title": "Azure Service Bus and idempotent ERP worker",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-002"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "ADR-001",
+      "title": "Use durable asynchronous messaging",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-002"
+      ]
+    }
+  ],
+  "implementationTasks": [
+    {
+      "id": "IMP-001",
+      "title": "Implement reliable intake and queue handoff",
+      "requirementIds": [
+        "REQ-001"
+      ]
+    }
+  ],
+  "testCases": [
+    {
+      "id": "TST-001",
+      "title": "ERP outage 45 minutes",
+      "status": "not_run",
+      "requirementIds": [
+        "REQ-001"
+      ]
+    },
+    {
+      "id": "TST-002",
+      "title": "Duplicate message replay",
+      "status": "not_run",
+      "requirementIds": [
+        "REQ-002"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "RSK-001",
+      "title": "ERP duplicate handling unspecified",
+      "requirementIds": [
+        "REQ-002"
+      ]
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "QUE-001",
+      "title": "Does ERP support external order idempotency keys?",
+      "blocking": true
+    }
+  ],
+  "conflicts": []
+}
