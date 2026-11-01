@@ -35,9 +35,9 @@ def bad_change(n):
  elif n==25:d["project"]="client_secret=TESTSECRET123456"
  elif n==26:d["components"][0]["requirmentIds"]=["REQ-001"]
  elif n==27:d["status"]="draft";d["decisions"]=[];d["implementationTasks"]=[];d["risks"]=[]
- elif n==28:d["requirements"][0]["acceptanceCriteria"]="  "
+ elif n==28:d["status"]="draft";d["requirements"][0]["acceptanceCriteria"]="  "
  elif n==29:d["schemaVersion"]="0.1.0"
- elif n==30:d["testCases"]=[x for x in d["testCases"] if "REQ-004" not in x["requirementIds"]]
+ elif n==30:d["status"]="draft";d["testCases"]=[x for x in d["testCases"] if "REQ-004" not in x["requirementIds"]]
  elif n==31:d["conflicts"]=[{"id":"CON-001","title":"Resolved conflict","status":"resolved","requirementIds":["REQ-001","REQ-003"]}]
  return d
 class ValidationRegression(unittest.TestCase):

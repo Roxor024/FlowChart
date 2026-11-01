@@ -6,8 +6,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 SCHEMA=ROOT/"schemas"/"integration-blueprint.schema.json"
 SECTIONS=("requirements","components","decisions","implementationTasks","testCases","risks","openQuestions","conflicts")
-AI_RE=re.compile(r"^(?:claude|chatgpt|gpt[- ]?\w*|ai assistant|flowpilot|automated reviewer|llm|bot)$",re.I)
-SECRET_RE=[re.compile(p,re.I) for p in (r"(?<!\w)(?:sig|client_secret|password|accountkey|sharedaccesskey)\s*[=:]\s*(?!\[REDACTED\])[^\s\",;}]{5,}",r"(?<!\\w)(?:api[_-]?key|ocp-apim-subscription-key)\\s*[=:]\\s*(?!\\[REDACTED\\])[^\\s\\\",;}]{5,}",r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",r"\beyJ[A-Za-z0-9_-]{15,}\.eyJ[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]+")]
+AI_RE=re.compile(r"(?:claude|chatgpt|gpt|copilot|flowpilot|llm|ai assistant|artificial intelligence|bot|model)",re.I)
+SECRET_RE=[re.compile(p,re.I) for p in (r"(?<!\w)(?:sig|client_secret|password|accountkey|sharedaccesskey)\s*[=:]\s*(?!\[REDACTED\])[^\s\",;}]{5,}",r"(?<!\w)(?:api[_-]?key|ocp-apim-subscription-key)\s*[=:]\s*(?!\[REDACTED\])[^\s\",;}]{5,}",r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",r"\beyJ[A-Za-z0-9_-]{15,}\.eyJ[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]+")]
 def valid_text(v):
     return isinstance(v,str) and bool(v.strip()) and v.strip().lower() not in ("tbd","unknown","none","x","n/a","yesterday")
 def collect_strings(value):
