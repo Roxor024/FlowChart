@@ -41,6 +41,7 @@ def semantic(doc):
         if item["status"] in ("passed","failed"):
             if not all(valid_text(item.get(k)) for k in ("evidenceRef","environment","artifactHash")):problems.append(item["id"]+" missing independently reviewable test evidence")
             if not re.fullmatch(r"[0-9a-fA-F]{64}",str(item.get("artifactHash",""))):problems.append(item["id"]+" evidence digest must be SHA-256")
+    if doc["status"]=="draft" and any(r["status"]=="confirmed" for r in reqs.values()) and any(not doc[section] for section in ("decisions","implementationTasks","risks")):problems.append("draft with confirmed requirements needs decisions, tasks and risk assessment")
     if doc["status"]=="provisional" and doc["reviewStatus"]=="approved":problems.append("provisional cannot be approved")
     for c in doc["conflicts"]:
         if c["status"]=="resolved" and not valid_text(c.get("resolution")):problems.append(c["id"]+" resolved without explanation")
