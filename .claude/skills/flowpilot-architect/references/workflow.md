@@ -1,17 +1,10 @@
-# Workflow and phase gates
+# FlowPilot v0.3 requirements and design workflow
 
-## Intake
-Classify each statement as confirmed, assumed, unknown or conflicting. Collect interfaces, volume/peaks, latency, acceptance semantics, retry tolerance, data classification, identity, network, ordering, idempotency, RTO/RPO, budget, operations ownership.
-Ask at most five of the highest-impact questions in a response. Record other unanswered questions in the blueprint without dumping them at the user.
-
-## Conflict gate
-Look for impossible combinations (e.g. synchronous success within 200 ms despite a one-hour backend outage). Explain the conflict and propose options. Do not mark design approved with unresolved blocking questions/conflicts.
-
-## Design
-Compare two practical patterns with explicit requirements traceability and Azure service constraints. Record ADRs, dependencies and assumptions.
-
-## Build / Test / Operate
-Provide ordered tasks with prerequisites and verification. Tests include happy path, outage, duplicate delivery, poison messages, auth failures and recovery. Operations include alerts, redaction, runbooks and ownership.
-
-## Approval
-Draft and unreviewed by default. Require reviewer, date and evidence to mark approved. Report validation status separately from review and test execution.
+- Extract known, assumed, unknown and conflicting requirements. Give requirements IDs, types and measurable criteria where confirmed.
+- Ask a maximum of five clarification questions per visible response. Store remaining unknowns in `openQuestions`.
+- When inputs conflict, stop short of definitive design, record a `CON-###` conflict and offer clear resolution paths. Preserve resolved conflicts with a resolution explanation.
+- If design cannot be justified, use `provisional` and empty component/test lists rather than inventing services.
+- Compare APIM, Functions, Logic Apps, Service Bus and Event Grid only where appropriate to actual requirements.
+- For order intake: establish durable acceptance and idempotency with race-safe state handling; use a transactional outbox when coordinating DB state with messaging. Worker must never overwrite newer state.
+- Separate generated artifacts, validation checks and human approval. Never self-approve or fabricate test passes.
+- Keep README, schema, examples, report and skill versions synchronized; schema migrations require explicit version change.

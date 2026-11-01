@@ -1,18 +1,22 @@
-# Azure integration pattern guide (review before production)
+# Azure integration architecture guidance
 
-## Reliable API -> queue -> ERP
-APIM -> secure intake Function -> Service Bus -> worker -> ERP. Persist before HTTP 202. Specify idempotency at producer, consumer and ERP boundary. Define retries, backoff, lock durations, DLQ triage, replay, reconciliation and status endpoint.
+## Reliable API → ERP
+APIM authenticates and routes; intake persists an idempotency record and outbox atomically before acknowledgment; relay publishes to Service Bus; worker handles business idempotency, backoff, DLQ, bounded concurrency and reconciliation of uncertain ERP outcomes. Never replace a later order state with an earlier one. Do not promise exactly-once business delivery.
 
-## Synchronous API
-APIM -> Function or Logic App -> backend when the response needs immediate data. Budget end-to-end latency across every hop. Consider backend timeouts, circuit-breaking, limited retries, caching where permitted, and fallback semantics. Never promise availability independent of an unavailable source of truth.
+## Low-latency synchronous API
+Budget client→APIM→worker/backend latency, distinguish p95/p99 from averages, evaluate caching staleness and source-of-truth limitations, timeouts, limited retries and downstream availability. Do not guarantee a response from an unavailable backend.
 
-## Event-driven fan-out
-For discrete event delivery consider Event Grid; for independent durable consumer processing consider Service Bus topics/subscriptions. Evaluate delivery/replay, ordering, filtering, per-consumer isolation, security and subscriptions.
+## Fan-out
+Event Grid supports events and push delivery; Service Bus topics/subscriptions offer brokered message consumption with durable subscriptions. Compare ordering, delivery guarantees, filtering, replay, failure isolation and consumer ownership.
 
-## File/SFTP batch
-Stage in storage; detect completion before ingestion; validate schemas and filenames; reject duplicates; quarantine invalid files; handle partial uploads, acknowledgments and replay. Consider Azure Storage SFTP or partner-specific integration boundary.
+## File / SFTP
+Consider Azure Blob Storage SFTP (hierarchical namespace required, feature-specific costs), upload completion markers, checksums, schema validation, duplicate detection, quarantine, acknowledgments and reprocessing.
 
-## Sensitive data and hybrid ERP
-Use least-privilege identity, Key Vault references, encrypted transport, redacted logs, retention and access review. Confirm hybrid connectivity, ERP protocols, availability and ownership.
+## Security and hybrid
+Use identity and least privilege, APIM policy validation, Key Vault, private connectivity where required, protected logs and retention. Confirm SAP/ERP connectivity, authorization, data residency and on-premises boundaries.
 
-All patterns are starting points, not pre-approved architectures. Verify current Microsoft documentation and target SKU restrictions.
+## Cost / tiers / resilience
+Service Bus private endpoints and geo-replication require Premium. Distinguish Service Bus geo-disaster-recovery (metadata) from geo-replication (data/state). Validate APIM tier-specific private network capabilities against current Microsoft documentation. Include environment, CI/CD, structured tracing and operational ownership.
+
+## Test guidance
+For each confirmed requirement, create a test with an expected outcome. Include outages, duplicates, partial failures, loss of acknowledgment, poison message recovery, and idempotent replay. Mark all tests not_run until independently executed.
