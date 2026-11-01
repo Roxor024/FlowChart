@@ -34,7 +34,7 @@ def bad_change(n):
  elif n==24:d["project"]="sig=REALISTIC_SECRET_VALUE_123456"
  elif n==25:d["project"]="client_secret=TESTSECRET123456"
  elif n==26:d["components"][0]["requirmentIds"]=["REQ-001"]
- elif n==27:d["decisions"]=[];d["implementationTasks"]=[];d["risks"]=[]
+ elif n==27:d["status"]="draft";d["decisions"]=[];d["implementationTasks"]=[];d["risks"]=[]
  elif n==28:d["requirements"][0]["acceptanceCriteria"]="  "
  elif n==29:d["schemaVersion"]="0.1.0"
  elif n==30:d["testCases"]=[x for x in d["testCases"] if "REQ-004" not in x["requirementIds"]]
