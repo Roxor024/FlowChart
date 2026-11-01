@@ -1,0 +1,9 @@
+# Test fixtures deliberately contain fake credentials to prove the validator rejects them.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Synthetic credentials used only as negative test fixtures"
+paths = [
+  '''^tests/''',
+]
