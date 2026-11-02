@@ -1,18 +1,26 @@
-# Human-readable output contract (v0.4)
+# Guided Builder v0.5 — human-facing report contract (preview)
 
-Produce an architect-friendly report, not a transcript. Build it from the blueprint so both state the same facts.
+The user's primary output is an implementation guide, not JSON and not an architecture audit. Keep the machine-readable blueprint in a separate advanced export; it provides validation, traceability and future automation.
 
-1. **Cover:** project, platform, skill and schema version, blueprint status (provisional/draft/approved), review status, validation status.
-2. **Executive summary:** problem, proposed solution, why, confidence, and the three decisions or questions that need attention.
-3. **Requirements:** confirmed, assumed, unknown, conflicting — each with ID and acceptance criteria. At most five questions asked now; the rest are recorded.
-4. **Conflicts:** each open conflict with why it conflicts and the options.
-5. **Architecture:** Mermaid diagram, component responsibility table with Azure service and tier assumptions, trust boundaries, one alternative with trade-offs.
-6. **Decisions (ADRs):** rationale, rejected alternative, trade-off, status.
-7. **Build plan:** numbered tasks with prerequisites, dependencies, exact verification and rollback.
-8. **Tests:** case, type, expected result, execution status. Evidence only for real executions; never fake a pass.
-9. **Risk register:** severity, evidence, mitigation, owner role.
-10. **Operations:** metrics, alerts with thresholds, tracing, DLQ recovery and replay, maintenance, owners.
-11. **Verification status:** validation result (or NOT EXECUTED and why), deployment not performed, human review state — visually separate from proposals.
-12. **Appendix:** full blueprint JSON, references, starter artifacts (labelled unverified).
+## Required order
 
-Style: short paragraphs, informative headings, narrow tables, print-friendly. When local scripts are available, `scripts/render_report.py <blueprint> <report.html>` produces an escaped HTML overview of the blueprint; it does not replace the written report or a verified diagram.
+1. **What are we building?** Explain goal and business benefit in two simple sentences. Define specialist terms on first use. State unknowns honestly.
+2. **At a glance.** Show the steps, prerequisites, expected services, necessary permissions and cost considerations without inventing prices.
+3. **Visible architecture diagram.** Render source → ingress/security → persistence → queue → worker → destination, with arrows, labels, trust boundaries and error/retry paths. For HTML use accessible inline SVG or local image; no remote scripts or CDNs. Mermaid source may be exported but cannot substitute for a visibly rendered diagram. For provisional designs mark assumptions and avoid invented services.
+4. **Prepare.** Give access/permissions checklist, dependencies, safe SAMPLE names and test payloads, budget approvals and missing business decisions.
+5. **Build it step by step.** One detailed section for EVERY implementationTask in blueprint, plus setup dependencies. Follow references/implementation-playbook.md. Each step needs exact actions, check, troubleshooting and rollback.
+6. **Test as you go.** Synthetic test input and expected output for each step, completion checklist, with execution state NOT RUN unless evidence exists.
+7. **Walk through one example.** Trace synthetic message from source to destination, then duplicate/failure/recovery.
+8. **Fix problems.** Symptom → likely cause → safe verification → correction → re-test.
+9. **Finish and operate.** Monitoring, alerts, recovery, owner roles, open decisions and handover checklist. State that no Azure deployment or human approval occurred.
+10. **Technical appendix (optional).** Blueprint JSON, schema validation, ADRs, traceability, risks, deeper architecture and starter artifacts.
+
+## Presentation rules
+
+- Keep the first screen beginner-friendly and visual; no raw JSON or long tables of IDs.
+- Every task ID in the blueprint has a matching practical step. Every required component is accounted for.
+- Explain where and how to configure something, with concrete but sanitized examples; do not invent portal labels.
+- Don't present code as deployed or checks as passed unless executed; all tests start NOT RUN.
+- Users can mark checklist items manually, but nothing is pre-checked.
+- For vague requirements, give a decision-first guide rather than pretending there is a complete deployable plan.
+- The existing scripts/render_report.py produces a TECHNICAL OVERVIEW, not this guided HTML experience. A new renderer must be built before claiming this is automatic.
