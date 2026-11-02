@@ -35,3 +35,16 @@ Create an architecture diagram and visual placement references, with numbered ca
 ## Beginner completeness check
 
 Before delivering, walk through the guide as if the reader has never opened Azure Portal or VS Code. Confirm every named resource has an explicit creation step, every code file has a path, every checkbox has a test, every configured queue is mapped to a Function trigger, and every unimplemented integration boundary is disclosed. Don't use phrases such as "configure as needed" or "set up authentication" without expanding the substeps or marking a blocking decision.
+
+## Required fields for every step
+
+1. Requirement: prerequisite, permissions and input contract.
+2. Why: business value.
+3. Official documentation: link a relevant Microsoft Learn how-to page directly beside the task, with a checked/unverified label.
+4. Code: name, path and complete source or state that no code is needed.
+5. Actions: every portal and editor step, including basic clicks.
+6. Expected outcome: exact resource or observed result.
+7. Verify: synthetic test, expected output, NOT RUN until executed.
+8. Troubleshoot and rollback: failures and safe recovery.
+
+Never invent documentation links or SAP WSDL elements.
