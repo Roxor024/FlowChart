@@ -1,246 +1,774 @@
 {
-  "schemaVersion": "0.3.0",
-  "project": "Order Processing — synthetic Azure integration",
-  "status": "provisional",
+  "schemaVersion": "0.4.0",
+  "project": "Order processing — synthetic reference design",
+  "status": "draft",
   "reviewStatus": "unreviewed",
-  "summary": "Receive orders reliably, buffer ERP outages and avoid duplicate business processing. Proposed only; no resources deployed.",
+  "summary": "HTTP order intake with durable acceptance (202 + order ID only after commit), a transactional outbox to a Service Bus queue, and an idempotent ERP worker. During ERP outages the worker pauses consumption; per-message retries are new messages scheduled before the original is completed; a sweeper re-publishes any order stuck beyond the outage budget. Draft: blocking questions on ERP idempotency, validation rules and data classification remain. Nothing deployed.",
   "dataClassification": "unknown",
   "requirements": [
     {
       "id": "REQ-001",
-      "title": "Accept order requests through REST",
+      "title": "Accept customer orders through an HTTP REST API",
       "status": "confirmed",
       "type": "functional",
-      "acceptanceCriteria": "A caller receives a durable acceptance identifier only after recording the request"
+      "priority": "critical",
+      "source": "Scenario brief",
+      "acceptanceCriteria": "POST /orders returns 202 with an order ID only after the order row and outbox row are committed in one transaction; returns 4xx for invalid requests"
     },
     {
       "id": "REQ-002",
-      "title": "Process 20,000 orders per day",
+      "title": "Handle approximately 20,000 orders per day",
       "status": "confirmed",
       "type": "nonfunctional",
-      "acceptanceCriteria": "Sustain 20,000 synthetic accepted orders in a 24-hour load test with peak capacity measured separately"
+      "priority": "high",
+      "source": "Scenario brief",
+      "acceptanceCriteria": "Load test sustains 20,000 synthetic orders in 24 hours with zero lost orders; peak-rate test pending REQ-008"
     },
     {
       "id": "REQ-003",
-      "title": "Tolerate ERP outages of 45 minutes",
+      "title": "Tolerate ERP unavailability of up to 45 minutes",
       "status": "confirmed",
       "type": "nonfunctional",
-      "acceptanceCriteria": "Pending orders remain recoverable after a simulated 45-minute ERP outage"
+      "priority": "critical",
+      "source": "Scenario brief",
+      "acceptanceCriteria": "During a simulated 60-minute ERP outage, intake keeps returning 202, zero messages reach the DLQ for ERP-unavailable reasons, and backlog drains after recovery"
     },
     {
       "id": "REQ-004",
-      "title": "Prevent duplicate ERP business processing",
+      "title": "Accepted orders must not disappear",
       "status": "confirmed",
-      "type": "functional",
-      "acceptanceCriteria": "Replaying a confirmed order does not create a second ERP order"
+      "type": "nonfunctional",
+      "priority": "critical",
+      "source": "Scenario brief",
+      "acceptanceCriteria": "Every order with a 202 response ends in exactly one terminal state (ERP-confirmed, rejected-with-reason, or manual-review) verified by a daily reconciliation count with zero unexplained gaps"
     },
     {
       "id": "REQ-005",
-      "title": "Deliver accepted orders to ERP",
+      "title": "Prevent duplicate business processing in the ERP",
       "status": "confirmed",
       "type": "functional",
-      "acceptanceCriteria": "A successfully processed order is correlated to exactly one ERP business record; retries reconcile uncertain outcomes"
+      "priority": "critical",
+      "source": "Scenario brief",
+      "acceptanceCriteria": "Resubmitting the same client idempotency key returns the original order ID; redelivering the same message produces at most one ERP order, verified by ERP external reference lookup"
     },
     {
       "id": "REQ-006",
-      "title": "Define target end-to-end processing latency",
+      "title": "Validate orders before ERP delivery",
+      "status": "confirmed",
+      "type": "functional",
+      "priority": "high",
+      "source": "Scenario brief",
+      "acceptanceCriteria": "Requests failing schema or business rules receive 400/422 with error detail and are never written to the outbox; business rule set supplied by QUE-003"
+    },
+    {
+      "id": "REQ-007",
+      "title": "Use Azure as the integration platform",
+      "status": "confirmed",
+      "type": "nonfunctional",
+      "priority": "medium",
+      "source": "Scenario brief",
+      "acceptanceCriteria": "Architecture review confirms every runtime component is an Azure-managed service or justified exception"
+    },
+    {
+      "id": "REQ-008",
+      "title": "Peak order rate and burst profile",
       "status": "unknown",
-      "type": "nonfunctional"
+      "type": "nonfunctional",
+      "source": "Not specified"
+    },
+    {
+      "id": "REQ-009",
+      "title": "End-to-end processing latency target (accepted to ERP-confirmed)",
+      "status": "unknown",
+      "type": "nonfunctional",
+      "source": "Not specified"
+    },
+    {
+      "id": "REQ-010",
+      "title": "Ordering requirements (e.g. per-customer sequence)",
+      "status": "unknown",
+      "type": "nonfunctional",
+      "source": "Not specified"
+    },
+    {
+      "id": "REQ-011",
+      "title": "Data classification and residency of order data",
+      "status": "unknown",
+      "type": "nonfunctional",
+      "source": "Not specified"
+    },
+    {
+      "id": "REQ-012",
+      "title": "Callers authenticate with Microsoft Entra ID OAuth 2.0 client credentials",
+      "status": "assumed",
+      "type": "nonfunctional",
+      "priority": "high",
+      "source": "Assumption pending QUE-005",
+      "acceptanceCriteria": "Requests without a valid token for the API audience receive 401 at APIM"
+    },
+    {
+      "id": "REQ-013",
+      "title": "Callers can query order status",
+      "status": "assumed",
+      "type": "functional",
+      "priority": "medium",
+      "source": "Assumption: needed because 202 means accepted, not completed",
+      "acceptanceCriteria": "GET /orders/{id} returns current state within 1 second for an existing order"
     }
   ],
   "components": [
     {
       "id": "CMP-001",
-      "title": "API Management",
+      "title": "API gateway",
       "requirementIds": [
-        "REQ-001"
+        "REQ-001",
+        "REQ-012"
       ],
       "azureService": "Azure API Management",
-      "responsibility": "Authenticate, throttle, route and correlate"
+      "sku": "Standard v2 (assumed; Premium v2 if full VNet injection required)",
+      "responsibility": "validate-jwt, rate limiting, request size limits, correlation ID injection, routing to intake"
     },
     {
       "id": "CMP-002",
-      "title": "Order intake and state store",
+      "title": "Order intake API",
       "requirementIds": [
         "REQ-001",
-        "REQ-004"
+        "REQ-005",
+        "REQ-006",
+        "REQ-013"
       ],
-      "azureService": "Azure Functions and transactional data store",
-      "responsibility": "Atomic insert-if-absent and durable acceptance via an outbox"
+      "azureService": "Azure Functions (Flex Consumption or Premium plan)",
+      "responsibility": "Validate request, insert-if-absent on idempotency key, write order + outbox row in one transaction, return 202 or the original result"
     },
     {
       "id": "CMP-003",
-      "title": "Queue and outbox relay",
-      "requirementIds": [
-        "REQ-002",
-        "REQ-003",
-        "REQ-005"
-      ],
-      "azureService": "Azure Service Bus",
-      "responsibility": "Durable messaging with retry and dead-letter handling"
-    },
-    {
-      "id": "CMP-004",
-      "title": "ERP processing worker",
+      "title": "Order state store with outbox table",
       "requirementIds": [
         "REQ-004",
         "REQ-005"
       ],
-      "azureService": "Azure Functions or Container Apps",
-      "responsibility": "Lease-safe monotonic state transitions, ERP idempotency and reconciliation"
+      "azureService": "Azure SQL Database",
+      "responsibility": "Source of truth for order state; unique constraint on idempotency key; outbox rows; monotonic state transitions guarded by version column"
+    },
+    {
+      "id": "CMP-004",
+      "title": "Outbox relay",
+      "requirementIds": [
+        "REQ-004"
+      ],
+      "azureService": "Azure Functions (timer or SQL trigger)",
+      "responsibility": "Publish unsent outbox rows with MessageId = order ID (first publish only) and OrderId property; mark rows sent; safe to re-run"
+    },
+    {
+      "id": "CMP-005",
+      "title": "Order queue",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-004"
+      ],
+      "azureService": "Azure Service Bus queue",
+      "sku": "Standard (assumed; Premium if private endpoints or geo-replication required)",
+      "responsibility": "Durable buffer between intake and ERP; DLQ for poison messages; duplicate detection as a send-side optimisation only"
+    },
+    {
+      "id": "CMP-006",
+      "title": "ERP delivery worker",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-005"
+      ],
+      "azureService": "Azure Functions (Service Bus trigger)",
+      "responsibility": "Idempotent ERP call keyed on the OrderId property (ERP external reference); circuit breaker that pauses receiving during ERP outages; per-message retries scheduled as NEW messages (MessageId = {orderId}:retry:{n}) before completing the original; reconcile uncertain outcomes"
+    },
+    {
+      "id": "CMP-007",
+      "title": "Secrets and certificates",
+      "requirementIds": [
+        "REQ-012"
+      ],
+      "azureService": "Azure Key Vault",
+      "responsibility": "ERP credentials if ERP lacks Entra ID; accessed by managed identity only"
+    },
+    {
+      "id": "CMP-008",
+      "title": "Observability",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-004"
+      ],
+      "azureService": "Application Insights + Log Analytics + Azure Monitor alerts",
+      "responsibility": "Distributed tracing via correlation ID, backlog and DLQ metrics, reconciliation dashboards"
+    },
+    {
+      "id": "CMP-009",
+      "title": "Reconciliation sweeper",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-004"
+      ],
+      "azureService": "Azure Functions (timer)",
+      "responsibility": "Find orders in a non-terminal state older than the outage budget plus margin and re-publish them with MessageId = {orderId}:sweep:{runId}; the state store, not the broker, is the source of truth"
     }
   ],
   "decisions": [
     {
       "id": "ADR-001",
-      "title": "Asynchronous order processing",
+      "title": "Asynchronous acceptance with 202 instead of synchronous ERP call",
       "requirementIds": [
         "REQ-001",
         "REQ-003",
-        "REQ-005"
+        "REQ-004"
       ],
-      "rationale": "ERP may be unavailable while intake remains available",
-      "alternative": "Synchronous direct ERP call",
-      "tradeoff": "202 means accepted rather than completed",
+      "rationale": "ERP can be down for 45 minutes; a synchronous call would fail or time out for the whole outage",
+      "alternative": "Synchronous APIM → ERP call",
+      "tradeoff": "202 means accepted, not completed; callers need status query or callback (REQ-013)",
       "status": "proposed"
     },
     {
       "id": "ADR-002",
-      "title": "Transactional outbox and idempotent consumer",
+      "title": "Transactional outbox instead of direct publish from intake",
       "requirementIds": [
-        "REQ-001",
         "REQ-004",
         "REQ-005"
       ],
-      "rationale": "Avoid state-write race and persistence/enqueue gap",
-      "alternative": "Enqueue before persistence",
-      "tradeoff": "Additional storage and reconciliation lifecycle",
+      "rationale": "Removes the gap where the DB commit succeeds but the Service Bus send fails (or the reverse)",
+      "alternative": "Send to Service Bus then write DB, or write DB then send",
+      "tradeoff": "Extra relay component and outbox housekeeping; small added delay",
+      "status": "proposed"
+    },
+    {
+      "id": "ADR-003",
+      "title": "Service Bus queue instead of Event Grid for order delivery",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-004"
+      ],
+      "rationale": "Point-to-point command with competing consumer, pull-based consumption, DLQ, sessions available if ordering becomes a requirement",
+      "alternative": "Event Grid push delivery (retries up to 24 h, no ordering guarantee)",
+      "tradeoff": "Consumer owns retry pacing; Standard tier lacks private endpoints",
+      "status": "proposed"
+    },
+    {
+      "id": "ADR-004",
+      "title": "Azure Functions instead of Logic Apps for intake and worker",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-005"
+      ],
+      "rationale": "Transactional insert-if-absent and outbox logic are clearer and testable in code",
+      "alternative": "Logic Apps Standard (attractive if an SAP/ERP connector replaces custom client code)",
+      "tradeoff": "More code to own; revisit if the ERP is SAP and the managed connector fits",
+      "status": "proposed"
+    },
+    {
+      "id": "ADR-005",
+      "title": "End-to-end idempotency in the application; Service Bus duplicate detection is not relied upon",
+      "requirementIds": [
+        "REQ-005"
+      ],
+      "rationale": "Duplicate detection only drops repeat MessageIds inside its time window (default 10 minutes, max 7 days) and does not cover consumer redelivery or ERP-side uncertainty. Retries and DLQ replays therefore use their own MessageIds; business idempotency keys on the OrderId property",
+      "alternative": "Rely on duplicate detection alone",
+      "tradeoff": "Requires ERP external-reference support or a lookup before create (RSK-001)",
+      "status": "proposed"
+    },
+    {
+      "id": "ADR-006",
+      "title": "Pause consumption during outages; retry individual messages with a new MessageId; reconcile from the state store",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-004"
+      ],
+      "rationale": "Abandoning burns maxDeliveryCount (default 10) within minutes. Re-sending with the original MessageId is unsafe: duplicate detection also applies to scheduled messages, so a retry inside the window is silently dropped, and completing before scheduling loses the order on a crash",
+      "alternative": "Rejected: abandon and let the broker retry (dead-letters healthy orders within minutes). Rejected: complete, then reschedule reusing the original MessageId (silently dropped by duplicate detection; lost on a crash)",
+      "tradeoff": "More worker logic (breaker, retry identity, schedule-then-complete) and a sweeper job to build and test",
       "status": "proposed"
     }
   ],
   "implementationTasks": [
     {
       "id": "IMP-001",
-      "title": "Design intake transaction and idempotency key",
+      "title": "Define order schema, validation rules and idempotency key contract",
       "requirementIds": [
-        "REQ-001",
-        "REQ-004"
+        "REQ-005",
+        "REQ-006"
       ],
       "componentIds": [
         "CMP-002"
       ],
-      "verification": "Review insert-if-absent and outbox atomicity tests",
-      "rollback": "Do not expose endpoint until verified"
+      "verification": "Contract reviewed with order producers; OpenAPI published",
+      "rollback": "No runtime impact",
+      "prerequisites": "Order producers and ERP team available for contract review"
     },
     {
       "id": "IMP-002",
-      "title": "Configure queue, worker retries and DLQ",
+      "title": "Create order table, unique idempotency index, version column and outbox table",
+      "requirementIds": [
+        "REQ-004",
+        "REQ-005"
+      ],
+      "componentIds": [
+        "CMP-003"
+      ],
+      "dependsOn": [
+        "IMP-001"
+      ],
+      "verification": "Concurrent duplicate inserts yield one row; stale-version update is rejected",
+      "rollback": "Drop schema in non-production; migration scripts are versioned"
+    },
+    {
+      "id": "IMP-003",
+      "title": "Build intake function (validate, insert-if-absent, outbox, 202)",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-005",
+        "REQ-006"
+      ],
+      "componentIds": [
+        "CMP-002",
+        "CMP-003"
+      ],
+      "dependsOn": [
+        "IMP-002"
+      ],
+      "verification": "TST-001, TST-002, TST-006 in test environment",
+      "rollback": "Keep APIM route disabled until verified",
+      "prerequisites": "Test environment with Azure SQL and Functions (no production data)"
+    },
+    {
+      "id": "IMP-004",
+      "title": "Build outbox relay publishing with MessageId = order ID",
+      "requirementIds": [
+        "REQ-004"
+      ],
+      "componentIds": [
+        "CMP-004",
+        "CMP-005"
+      ],
+      "dependsOn": [
+        "IMP-003"
+      ],
+      "verification": "TST-004: kill relay mid-batch; every outbox row is published at least once",
+      "rollback": "Stop relay; outbox retains unsent rows"
+    },
+    {
+      "id": "IMP-005",
+      "title": "Build ERP worker: circuit breaker, schedule-then-complete retries with new MessageIds, reconciliation",
       "requirementIds": [
         "REQ-003",
         "REQ-005"
       ],
       "componentIds": [
-        "CMP-003",
-        "CMP-004"
+        "CMP-006",
+        "CMP-007"
       ],
       "dependsOn": [
-        "IMP-001"
+        "IMP-004"
       ],
-      "verification": "Demonstrate outage, retry and reconciliation",
-      "rollback": "Pause consumer and preserve messages"
+      "verification": "TST-003, TST-005, TST-013, TST-014, TST-015, TST-016",
+      "rollback": "Disable worker; messages remain in queue and the sweeper re-publishes stuck orders",
+      "prerequisites": "ERP sandbox endpoint and documented error codes"
+    },
+    {
+      "id": "IMP-006",
+      "title": "Configure APIM policies (validate-jwt, rate-limit, correlation header)",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-012"
+      ],
+      "componentIds": [
+        "CMP-001"
+      ],
+      "dependsOn": [
+        "IMP-003"
+      ],
+      "verification": "TST-007",
+      "rollback": "Revert policy revision"
+    },
+    {
+      "id": "IMP-007",
+      "title": "Dashboards, alerts, DLQ runbook and daily reconciliation job",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-004"
+      ],
+      "componentIds": [
+        "CMP-008"
+      ],
+      "dependsOn": [
+        "IMP-005"
+      ],
+      "verification": "Alert fires in test when DLQ > 0 or oldest message age > 50 minutes",
+      "rollback": "Not applicable"
+    },
+    {
+      "id": "IMP-008",
+      "title": "Bicep/Terraform per environment with CI/CD and approval gate",
+      "requirementIds": [
+        "REQ-007"
+      ],
+      "componentIds": [
+        "CMP-001",
+        "CMP-002",
+        "CMP-003",
+        "CMP-004",
+        "CMP-005",
+        "CMP-006",
+        "CMP-007",
+        "CMP-008",
+        "CMP-009"
+      ],
+      "verification": "What-if/plan reviewed by a human before any apply",
+      "rollback": "Redeploy previous tagged release",
+      "prerequisites": "Separate dev/test/prod subscriptions or resource groups; pipeline service connection with least privilege"
+    },
+    {
+      "id": "IMP-009",
+      "title": "Build reconciliation sweeper and DLQ replay tool (new MessageId per replay)",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-004"
+      ],
+      "componentIds": [
+        "CMP-009",
+        "CMP-005"
+      ],
+      "dependsOn": [
+        "IMP-005"
+      ],
+      "verification": "TST-017, TST-018",
+      "rollback": "Disable timer; no data is changed by disabling"
     }
   ],
   "testCases": [
     {
       "id": "TST-001",
-      "title": "ERP unavailable for 45 minutes",
+      "title": "Acknowledgement only after commit",
       "requirementIds": [
-        "REQ-003",
-        "REQ-005"
+        "REQ-001",
+        "REQ-004"
       ],
       "status": "not_run",
-      "expectedResult": "Orders stay recoverable and are processed or reconciled when ERP returns"
+      "expectedResult": "Fault injected after commit but before response: retry with same key returns original order ID; fault before commit: no row, no 202",
+      "type": "failure"
     },
     {
       "id": "TST-002",
-      "title": "Duplicate submission",
+      "title": "Concurrent duplicate submissions",
+      "requirementIds": [
+        "REQ-005"
+      ],
+      "status": "not_run",
+      "expectedResult": "50 parallel POSTs with one idempotency key create one order and one outbox row",
+      "type": "functional"
+    },
+    {
+      "id": "TST-003",
+      "title": "ERP outage of 60 minutes",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-004"
+      ],
+      "status": "not_run",
+      "expectedResult": "Intake stays available, DLQ count stays 0, backlog drains after recovery, all orders reach a terminal state",
+      "type": "failure"
+    },
+    {
+      "id": "TST-004",
+      "title": "Relay crash mid-batch",
       "requirementIds": [
         "REQ-004"
       ],
       "status": "not_run",
-      "expectedResult": "One ERP business order and a stable idempotency result"
+      "expectedResult": "Every committed outbox row is published at least once after restart",
+      "type": "failure"
     },
     {
-      "id": "TST-003",
-      "title": "Daily throughput test",
+      "id": "TST-005",
+      "title": "ERP timeout with unknown outcome",
+      "requirementIds": [
+        "REQ-005"
+      ],
+      "status": "not_run",
+      "expectedResult": "Worker looks up ERP by external reference before retrying; at most one ERP order exists",
+      "type": "failure"
+    },
+    {
+      "id": "TST-006",
+      "title": "Invalid order rejected",
+      "requirementIds": [
+        "REQ-006"
+      ],
+      "status": "not_run",
+      "expectedResult": "400/422 returned, no outbox row written",
+      "type": "functional"
+    },
+    {
+      "id": "TST-007",
+      "title": "Missing or invalid token",
+      "requirementIds": [
+        "REQ-012"
+      ],
+      "status": "not_run",
+      "expectedResult": "401 at APIM; intake function not invoked",
+      "type": "security"
+    },
+    {
+      "id": "TST-008",
+      "title": "Daily volume load test",
       "requirementIds": [
         "REQ-002"
       ],
       "status": "not_run",
-      "expectedResult": "20,000 accepted orders in 24 hours in approved test environment"
+      "expectedResult": "20,000 orders in 24 hours, zero lost, reconciliation clean",
+      "type": "performance"
     },
     {
-      "id": "TST-004",
-      "title": "Durable acceptance test",
+      "id": "TST-009",
+      "title": "Poison message",
       "requirementIds": [
-        "REQ-001"
+        "REQ-004"
       ],
       "status": "not_run",
-      "expectedResult": "No acceptance acknowledgment before durable store commit"
+      "expectedResult": "Message failing deterministically goes to DLQ, order marked manual-review, alert raised, resubmission tool restores it after fix",
+      "type": "operational"
+    },
+    {
+      "id": "TST-010",
+      "title": "Architecture conformance review",
+      "requirementIds": [
+        "REQ-007"
+      ],
+      "status": "not_run",
+      "expectedResult": "Reviewer confirms all runtime components are Azure services",
+      "type": "functional"
+    },
+    {
+      "id": "TST-011",
+      "title": "Status query",
+      "requirementIds": [
+        "REQ-013"
+      ],
+      "status": "not_run",
+      "expectedResult": "GET returns accepted/processing/confirmed/rejected within 1 second",
+      "type": "functional"
+    },
+    {
+      "id": "TST-012",
+      "title": "Lost acknowledgement to caller",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-005"
+      ],
+      "type": "failure",
+      "status": "not_run",
+      "expectedResult": "Client times out after commit, retries with same idempotency key and receives the original order ID; one order row exists"
+    },
+    {
+      "id": "TST-013",
+      "title": "Worker crash between scheduling a retry and completing the original",
+      "requirementIds": [
+        "REQ-004",
+        "REQ-005"
+      ],
+      "type": "failure",
+      "status": "not_run",
+      "expectedResult": "Original is redelivered and a duplicate retry may exist; at most one ERP order exists for the OrderId (verified by external-reference lookup) and the order reaches a terminal state"
+    },
+    {
+      "id": "TST-014",
+      "title": "Complete fails after a successful ERP call",
+      "requirementIds": [
+        "REQ-005"
+      ],
+      "type": "failure",
+      "status": "not_run",
+      "expectedResult": "Redelivered message finds the order already confirmed (lookup by OrderId) and completes without a second ERP call"
+    },
+    {
+      "id": "TST-015",
+      "title": "Retry sent while duplicate detection is enabled",
+      "requirementIds": [
+        "REQ-004"
+      ],
+      "type": "failure",
+      "status": "not_run",
+      "expectedResult": "Retry message (MessageId {orderId}:retry:n) is delivered, not dropped, within the duplicate-detection window"
+    },
+    {
+      "id": "TST-016",
+      "title": "Circuit breaker open for 60 minutes",
+      "requirementIds": [
+        "REQ-003"
+      ],
+      "type": "failure",
+      "status": "not_run",
+      "expectedResult": "No message reaches the DLQ for ERP-unavailable reasons; delivery counts stay within budget; processing resumes when the probe succeeds"
+    },
+    {
+      "id": "TST-017",
+      "title": "Stuck order recovered by sweeper",
+      "requirementIds": [
+        "REQ-004"
+      ],
+      "type": "failure",
+      "status": "not_run",
+      "expectedResult": "An order whose message was deleted manually is re-published by the sweeper and reaches a terminal state"
+    },
+    {
+      "id": "TST-018",
+      "title": "DLQ resubmission inside the duplicate-detection window",
+      "requirementIds": [
+        "REQ-004"
+      ],
+      "type": "operational",
+      "status": "not_run",
+      "expectedResult": "Replayed message ({orderId}:replay:{seq}) is delivered and processed once"
     }
   ],
   "risks": [
     {
       "id": "RSK-001",
-      "title": "ERP idempotency contract unconfirmed",
+      "title": "ERP idempotency contract unknown",
       "requirementIds": [
-        "REQ-004",
         "REQ-005"
       ],
       "severity": "high",
-      "mitigation": "Confirm ERP external reference support and implement reconciliation",
-      "owner": "TBD",
-      "evidence": "Business requirement, ERP documentation pending"
+      "owner": "Integration lead",
+      "mitigation": "Confirm external-reference uniqueness or lookup API before build; otherwise add a pre-create lookup and manual reconciliation",
+      "evidence": "Not stated in requirements"
+    },
+    {
+      "id": "RSK-002",
+      "title": "Retry design can dead-letter or silently drop orders",
+      "requirementIds": [
+        "REQ-003",
+        "REQ-004"
+      ],
+      "severity": "high",
+      "owner": "Integration lead",
+      "mitigation": "Pause consumption on ERP outage; per-message retries as new messages ({orderId}:retry:{n}) scheduled before the original is completed; never reuse the original MessageId; sweeper re-publishes stuck orders",
+      "evidence": "Microsoft docs: abandon increments delivery count (default max 10); scheduled messages are included in duplicate detection"
+    },
+    {
+      "id": "RSK-003",
+      "title": "Standard tier lacks private networking",
+      "requirementIds": [
+        "REQ-011"
+      ],
+      "severity": "medium",
+      "owner": "Security architect",
+      "mitigation": "If classification requires private endpoints, move Service Bus to Premium and re-price",
+      "evidence": "Microsoft Learn: private endpoints are Premium-only"
+    },
+    {
+      "id": "RSK-004",
+      "title": "Outbox relay becomes a silent single point of delay",
+      "requirementIds": [
+        "REQ-004"
+      ],
+      "severity": "medium",
+      "owner": "Platform operations",
+      "mitigation": "Alert on oldest unsent outbox row age",
+      "evidence": "Design inference"
     }
   ],
   "openQuestions": [
     {
       "id": "QUE-001",
-      "title": "What is peak orders per second?",
-      "blocking": true,
+      "title": "What is the peak order rate per second and when do bursts occur?",
+      "blocking": false,
       "requirementIds": [
-        "REQ-002"
+        "REQ-008"
       ]
     },
     {
       "id": "QUE-002",
-      "title": "What is the expected ERP idempotency mechanism?",
+      "title": "Does the ERP accept a client-supplied external reference and reject duplicates on it?",
       "blocking": true,
       "requirementIds": [
-        "REQ-004",
         "REQ-005"
+      ]
+    },
+    {
+      "id": "QUE-003",
+      "title": "What validation rules apply, and which must be synchronous?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-006"
+      ]
+    },
+    {
+      "id": "QUE-004",
+      "title": "What is the data classification and residency requirement for order data?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-011"
+      ]
+    },
+    {
+      "id": "QUE-005",
+      "title": "How do order producers authenticate today, and must they get a completion callback?",
+      "blocking": false,
+      "requirementIds": [
+        "REQ-012",
+        "REQ-013"
+      ]
+    },
+    {
+      "id": "QUE-006",
+      "title": "Is per-customer ordering required?",
+      "blocking": false,
+      "requirementIds": [
+        "REQ-010"
+      ]
+    },
+    {
+      "id": "QUE-007",
+      "title": "What end-to-end latency is acceptable outside outages?",
+      "blocking": false,
+      "requirementIds": [
+        "REQ-009"
       ]
     }
   ],
   "conflicts": [],
   "operations": {
     "monitoring": [
-      "Accepted-to-completed lag",
-      "Queue age",
-      "Outbox backlog",
-      "Processing failures"
+      "Intake 2xx/4xx/5xx rate",
+      "Oldest unsent outbox row age",
+      "Queue active message count and oldest message age",
+      "DLQ message count",
+      "ERP call latency and circuit state",
+      "Accepted-to-confirmed lag"
     ],
     "alerts": [
-      "DLQ growth",
-      "Backlog exceeds outage budget"
+      "DLQ count > 0",
+      "Oldest queue message age > 50 minutes",
+      "Outbox unsent age > 5 minutes",
+      "Circuit open > 45 minutes",
+      "Daily reconciliation gap > 0",
+      "Sweeper re-published any order (indicates a messaging defect)"
+    ],
+    "tracing": [
+      "Generate or accept a W3C traceparent at APIM; propagate through intake, outbox row, Service Bus message properties and ERP call",
+      "Log order ID and idempotency key on every hop; never log full payloads containing personal data"
     ],
     "recovery": [
-      "Quarantine poison messages",
-      "Replay only after idempotency review",
-      "Reconcile uncertain ERP outcomes"
+      "Fix cause, then resubmit DLQ messages as NEW messages (MessageId = {orderId}:replay:{dlqSequenceNumber}) via runbook",
+      "Replay is safe because ERP calls and state transitions are idempotent on OrderId",
+      "Sweeper re-publishes orders stuck in a non-terminal state beyond the outage budget",
+      "Reconcile orders in uncertain state against ERP by external reference"
+    ],
+    "maintenance": [
+      "Quarterly DLQ and reconciliation review",
+      "Rotate ERP credentials in Key Vault per policy; prefer managed identity where ERP supports Entra ID",
+      "Outbox and idempotency-record retention job (retain at least the client retry window plus audit period)",
+      "Review Service Bus and APIM tier against current Microsoft limits before scaling"
     ],
     "owners": [
-      "Integration operations: TBD"
+      "Integration team: intake, relay, worker",
+      "Platform team: APIM, Service Bus, monitoring",
+      "ERP team: external-reference contract"
     ]
   }
 }

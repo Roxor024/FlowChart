@@ -1,6 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "FlowPilot integration blueprint 0.3.0",
+  "$id": "https://github.com/Roxor024/FlowChart/schemas/integration-blueprint-0.4.0.json",
+  "title": "FlowPilot integration blueprint 0.4.0",
+  "description": "Machine-readable engineering blueprint produced by the FlowPilot Architect skill. Structural rules live here; cross-reference and approval rules live in scripts/validate_blueprint.py.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -20,7 +22,7 @@
   ],
   "properties": {
     "schemaVersion": {
-      "const": "0.3.0"
+      "const": "0.4.0"
     },
     "project": {
       "type": "string",
@@ -28,10 +30,11 @@
     },
     "status": {
       "enum": [
-        "draft",
         "provisional",
+        "draft",
         "approved"
-      ]
+      ],
+      "description": "provisional = requirements insufficient for a full design; draft = complete proposal awaiting review; approved = human approval evidenced"
     },
     "reviewStatus": {
       "enum": [
@@ -59,7 +62,8 @@
         },
         "evidenceRef": {
           "type": "string",
-          "pattern": "\\S"
+          "pattern": "\\S",
+          "description": "Reference to an external record (PR, change ticket, CAB minute) — not a free-text claim"
         }
       }
     },
@@ -213,7 +217,8 @@
             "enum": [
               "proposed",
               "accepted",
-              "rejected"
+              "rejected",
+              "superseded"
             ]
           }
         }
@@ -255,20 +260,25 @@
             "items": {
               "type": "string",
               "pattern": "^IMP-[0-9]{3,}$"
-            }
-          },
-          "verification": {
-            "type": "string"
-          },
-          "rollback": {
-            "type": "string"
+            },
+            "uniqueItems": true
           },
           "componentIds": {
             "type": "array",
             "items": {
               "type": "string",
               "pattern": "^CMP-[0-9]{3,}$"
-            }
+            },
+            "uniqueItems": true
+          },
+          "prerequisites": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "string"
+          },
+          "rollback": {
+            "type": "string"
           }
         }
       }
@@ -305,6 +315,15 @@
           "description": {
             "type": "string"
           },
+          "type": {
+            "enum": [
+              "functional",
+              "failure",
+              "security",
+              "performance",
+              "operational"
+            ]
+          },
           "status": {
             "enum": [
               "not_run",
@@ -327,7 +346,8 @@
             "type": "string"
           },
           "artifactHash": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$"
           }
         }
       }
@@ -445,17 +465,27 @@
               "resolved"
             ]
           },
+          "explanation": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "\\S"
+            }
+          },
           "resolution": {
             "type": "string"
           },
           "requirementIds": {
             "type": "array",
-            "minItems": 2,
             "items": {
               "type": "string",
               "pattern": "^REQ-[0-9]{3,}$"
             },
-            "uniqueItems": true
+            "uniqueItems": true,
+            "minItems": 2
           }
         }
       }
@@ -463,29 +493,48 @@
     "operations": {
       "type": "object",
       "additionalProperties": false,
+      "required": [],
       "properties": {
         "monitoring": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S"
           }
         },
         "alerts": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S"
+          }
+        },
+        "tracing": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "\\S"
           }
         },
         "recovery": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S"
+          }
+        },
+        "maintenance": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "\\S"
           }
         },
         "owners": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S"
           }
         }
       }
@@ -534,6 +583,44 @@
         "required": [
           "reviewEvidence"
         ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "conflicts": {
+            "contains": {
+              "properties": {
+                "status": {
+                  "const": "resolved"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "conflicts": {
+            "items": {
+              "if": {
+                "properties": {
+                  "status": {
+                    "const": "resolved"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "resolution"
+                ]
+              }
+            }
+          }
+        }
       }
     }
   ]

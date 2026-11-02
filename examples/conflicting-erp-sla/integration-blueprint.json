@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "0.4.0",
+  "project": "Scenario E — synchronous 200 ms with a one-hour ERP outage (contradictory)",
+  "status": "provisional",
+  "reviewStatus": "unreviewed",
+  "summary": "The three constraints cannot all hold. The conflicts are recorded with options; the design stays provisional until the business chooses.",
+  "dataClassification": "unknown",
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "title": "The integration must be synchronous",
+      "status": "conflicting",
+      "type": "nonfunctional",
+      "source": "User"
+    },
+    {
+      "id": "REQ-002",
+      "title": "Guarantee completion within 200 ms",
+      "status": "conflicting",
+      "type": "nonfunctional",
+      "source": "User"
+    },
+    {
+      "id": "REQ-003",
+      "title": "Remain successful while the ERP is unavailable for one hour",
+      "status": "conflicting",
+      "type": "nonfunctional",
+      "source": "User"
+    }
+  ],
+  "components": [],
+  "decisions": [],
+  "implementationTasks": [],
+  "testCases": [],
+  "risks": [],
+  "openQuestions": [
+    {
+      "id": "QUE-001",
+      "title": "Does 'success' mean the request is durably accepted, or that the ERP has committed it?",
+      "blocking": true,
+      "requirementIds": [
+        "REQ-001",
+        "REQ-002",
+        "REQ-003"
+      ]
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "CON-001",
+      "title": "Synchronous completion vs ERP outage",
+      "status": "open",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-003"
+      ],
+      "explanation": "A synchronous call that completes in the ERP cannot succeed while the ERP is down.",
+      "options": [
+        "Redefine success as durable acceptance (202) and complete asynchronously",
+        "Keep synchronous completion and accept failures during outages",
+        "Serve from a replicated read model if the call is a read, accepting staleness"
+      ]
+    },
+    {
+      "id": "CON-002",
+      "title": "200 ms completion guarantee vs one-hour outage",
+      "status": "open",
+      "requirementIds": [
+        "REQ-002",
+        "REQ-003"
+      ],
+      "explanation": "No latency guarantee is possible for a completion that depends on an unavailable system.",
+      "options": [
+        "Apply the 200 ms target to acceptance only",
+        "Apply it to completion only while the ERP is healthy, with a stated availability target"
+      ]
+    }
+  ],
+  "operations": {
+    "monitoring": [],
+    "alerts": [],
+    "tracing": [],
+    "recovery": [],
+    "maintenance": [],
+    "owners": []
+  }
+}
