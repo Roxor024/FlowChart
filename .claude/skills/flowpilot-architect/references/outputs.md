@@ -24,3 +24,12 @@ The user's primary output is an implementation guide, not JSON and not an archit
 - Users can mark checklist items manually, but nothing is pre-checked.
 - For vague requirements, give a decision-first guide rather than pretending there is a complete deployable plan.
 - The existing scripts/render_report.py produces a TECHNICAL OVERVIEW, not this guided HTML experience. A new renderer must be built before claiming this is automatic.
+
+## Generated source-code and visual-reference acceptance criteria
+
+- **Files, not code snippets alone:** generate copyable, named source/config files whenever needed (Logic Apps workflow definition, connection parameter references, Azure Functions trigger and implementation, models/mappers, tests, dependency manifest, local-settings.example.json, queue manifest, optional infrastructure-as-code). Show the exact destination path, required edits, test command and expected result for every file.
+- **Completeness inventory:** include an explicit matrix marking each artifact as WORKING LOCAL EXAMPLE / UNVERIFIED STARTER / TEMPLATE ONLY / REQUIRES CONTRACT. Never imply a JSON routing sketch is an importable Logic App; never claim SAP calls or Dataverse updates work if not implemented.
+- **Seven-operation use cases:** make one routing entry and mapping per business operation; include invalid/unknown route and error handling. Ensure queue names and function trigger bindings match exactly. Protect against Dataverse update loops, duplicate delivery, SAP success plus Dataverse update failure, and poison-message handling.
+- **Images where they make the guide easier:** provide a visible system architecture drawing, component-specific step location visuals, a service-bus queue layout, and Logic App/Function routing flows. Prefer generated local SVG with clear numbered callouts and arrows. Mark any mock Azure Portal screenshot as an ILLUSTRATION; use real official screenshots only where authorized and current. Never invent UI states or claim a generated illustration is a screenshot.
+- **Don't skip obvious steps:** even creating a resource group, choosing a subscription, selecting a region, naming a namespace, creating each queue, setting up connections, local test run, deployment approval and result observation must be accounted for. If too long for one screen, organize the detail into progressive disclosure panels, not omissions.
+- **Evidence:** local unit tests may demonstrate mocked transformations/routing only; clearly mark external SAP, Dataverse and Azure integration tests NOT EXECUTED until actually run.

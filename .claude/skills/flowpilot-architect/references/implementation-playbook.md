@@ -23,3 +23,15 @@
 6. Simulate a ledger outage only in an approved disposable test environment; check retry and reconciliation without silently losing events.
 
 These are conceptual stages. The final guide must expand each stage into current, checked navigation, sample code, configuration fields, test instructions and a rollback appropriate to the named provider.
+
+## Mandatory file-by-file build companion
+
+For **every needed implementation file**, include a copyable file with its relative path, language/runtime version, required libraries, purpose, exactly where it belongs, and exact local test command. For Azure Function apps, include host.json, requirements.txt (Python) or appropriate dependencies, trigger entry points, configuration placeholders, exception handling and synthetic tests. For Logic Apps, distinguish a deployable workflow definition from a routing fragment and include required connection references. For Service Bus, supply each required queue's configuration manifest, TTL, DLQ strategy, security/identity and matching function trigger. For SOAP, parse WSDL/XSD only when actually supplied; otherwise synthetic example and explicit mapping gaps. For Dataverse, describe connector authentication, update fields, idempotency/loop guard and response retry or reconciliation; don't claim the update exists if it's only planned.
+
+## Illustrations at each important action
+
+Create an architecture diagram and visual placement references, with numbered callouts matching manual steps. Use SVG/HTML drawings for conceptual Azure Portal illustrations (clearly labeled NOT A SCREENSHOT). Show a distinct picture for creating a Service Bus namespace/queues, configuring a Logic App switch, and configuring a Function trigger; for an actual screenshot use a current authoritative UI capture rather than a fabricated portal image. Keep a text description for accessibility.
+
+## Beginner completeness check
+
+Before delivering, walk through the guide as if the reader has never opened Azure Portal or VS Code. Confirm every named resource has an explicit creation step, every code file has a path, every checkbox has a test, every configured queue is mapped to a Function trigger, and every unimplemented integration boundary is disclosed. Don't use phrases such as "configure as needed" or "set up authentication" without expanding the substeps or marking a blocking decision.
