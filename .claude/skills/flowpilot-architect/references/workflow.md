@@ -1,5 +1,9 @@
 # Workflow and phase gates (v0.4)
 
+## 0. Mode and complexity gate
+Default to Quick Design on first contact: restate the goal, identify blockers, ask at most five questions, and show a compact labelled architecture sketch. Full Build Pack (code, multiple diagrams, HTML, JSON and click-by-click manual) is opt-in or follows explicit user request. A user's direct request for a full synthetic pack authorizes an honest example even with missing contracts; never claim it works with SAP/Dataverse without those contracts.
+Architecture is chosen by constraints rather than by the reference example. Start with one Logic App when it meets volume, connectors, observability, transaction and retry requirements; add Service Bus, Functions, state store or sweeper only when a named constraint justifies it. Compare alternatives and show why any extra service earns its cost and complexity.
+
 ## 1. Intake
 Classify each statement as confirmed, assumed, unknown or conflicting, with its source. Cover: interfaces and protocols, volume and peaks, payload size, latency (p95/p99, not averages), acceptance vs completion semantics, ordering, idempotency at producer/consumer/target, retry tolerance, RTO/RPO, data classification and residency, identity, network boundaries, budget, environments and operational ownership.
 
@@ -14,6 +18,7 @@ Look for combinations that cannot all hold (example: synchronous success within 
 
 ## 3. Status gate
 - Too little information for a full design → `provisional`. Empty components/tests are acceptable; do not fabricate services to fill the schema.
+- A blueprint with any blocking open question MUST be `provisional`, even if a plausible design has been sketched. `draft` requires blockers resolved. A user-requested synthetic pack with blockers stays `provisional`.
 - Full proposal → `draft`. Requires components, decisions, implementation tasks, tests and risks. Every confirmed requirement needs measurable acceptance criteria and at least one test.
 - `approved` only with user-supplied external review evidence and no blocking questions, open conflicts, or unknown/conflicting requirements.
 

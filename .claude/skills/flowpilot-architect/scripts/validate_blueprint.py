@@ -225,6 +225,8 @@ def semantic_checks(doc: dict, evidence_dir: Path | None = None) -> tuple[list[s
             if not doc[section]:
                 errors.append(f"status '{status}' requires a non-empty '{section}' "
                               f"(use status 'provisional' when requirements are insufficient)")
+    if status == "draft" and any(q["blocking"] for q in doc["openQuestions"]):
+        warnings.append("draft blueprint has blocking open questions; use provisional until blockers are resolved")
     if status == "draft" and (doc["conflicts"] and any(c["status"] == "open" for c in doc["conflicts"])):
         warnings.append("open conflicts present: consider status 'provisional' until resolved")
 
