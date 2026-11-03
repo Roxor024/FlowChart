@@ -2,6 +2,13 @@
 
 Patterns are starting points, not pre-approved architectures. Verify tier limits and feature availability against current Microsoft documentation before relying on them, and say when a detail is unverified.
 
+## SAP BAPI correctness — transaction and language guardrails
+- Verify whether the SAP interface is SOAP, BAPI/RFC, IDoc, OData or another contract. Do not apply BAPI commit rules blindly to a SOAP endpoint; use the actual WSDL/BAPI method and SAP team contract.
+- For the SAP Logic Apps BAPI connector, Auto Commit **does not commit** when the BAPI response contains warnings; a returned document number is not proof of a committed business document. On a warning, do NOT mark Dataverse Synced or assume creation succeeded. Where appropriate and authorized, use a stateful session, disable auto-commit, inspect RETURN messages, explicitly commit/rollback using supported SAP actions, and read the SAP document back to verify durable creation. For uncertainty, retain NeedsVerification/ManualReview and do not blindly repeat a non-idempotent create.
+- Official Microsoft Learn: https://learn.microsoft.com/en-us/azure/logic-apps/connectors/sap and https://learn.microsoft.com/en-us/azure/logic-apps/connectors/built-in/reference/sap/ . Check plan-specific connector semantics.
+- Language filtering is intersection of product translations actually returned by SAP and Dataverse *active permitted languages*, using a confirmed code mapping (SAP SPRAS or ISO LAISO ↔ Dataverse LCID or custom language table). Never assume two-letter ISO codes uniquely determine language/region; en-US and en-GB can collide. If a mapping is ambiguous, reject/quarantine that translation and request a deterministic rule; do not pick the last match.
+- If there are zero matches, distinguish legitimate no-overlap from a missing/incorrect Dataverse language catalog. Do not silently mark Synced when configuration cannot be verified. Log omitted languages with reasons, perform idempotent upserts using a stable consignment + language identity, and only set Synced after SAP committed/read-back and all required Dataverse writes succeeded.
+
 ## Choosing services
 | Need | Prefer | Notes |
 |---|---|---|

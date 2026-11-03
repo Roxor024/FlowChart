@@ -1,4 +1,8 @@
-# Guided Builder v0.5 — human-facing report contract (preview)
+# FlowPilot output contract — Quick Design / Full Build Pack
+
+**Default: Quick Design.** One-page overview with business goal, known requirements and assumptions, at most five blocking questions, concise diagram/sketch (clearly proposed), simplest viable design and alternative, risks, and what the user must decide. Do NOT generate the long ten-section manual or code ZIP by default.
+
+**Full Build Pack: opt-in or explicitly requested.** Apply the sections below only in this mode. A provisional build pack may contain synthetic adapters, but its missing WSDL and Dataverse schema must be prominent.
 
 The user's primary output is an implementation guide, not JSON and not an architecture audit. Keep the machine-readable blueprint in a separate advanced export; it provides validation, traceability and future automation.
 

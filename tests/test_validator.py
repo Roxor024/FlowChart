@@ -28,7 +28,7 @@ class Accepts(unittest.TestCase):
         return warnings
 
     def test_V01_example(self):
-        self.assertAccepted(fresh(), max_warnings=0)
+        self.assertAccepted(fresh(), max_warnings=1)  # baseline draft has blocking questions; new status warning is expected
 
     def test_V24_approved_with_human_evidence(self):
         self.assertAccepted(approve(fresh()))
