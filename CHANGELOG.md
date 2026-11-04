@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased: beginner-friendly Quick Design
+The default Quick Design reply is now written for readers who are new to integration work.
+- New `references/quick-design-template.md` sets the section order:
+  1. Plain status line.
+  2. Requirements tagged Clear / Needs detail / Our guess.
+  3. Outcome checks with one worked example.
+  4. Five-step flow.
+  5. Architecture grouped by trust area, with a numbered legend.
+  6. Protections.
+  7. At most five questions, each with "Why we ask", a "Not sure" choice and a "For your tech team" line.
+  8. Two next-step choices.
+  9. Optional technical details.
+  10. "Where things stand".
+  11. Glossary.
+- New `assets/quick-design-page.html`: a self-contained HTML version (no external scripts, fonts or images), filled with the Dataverse → SAP worked example.
+- New `examples/quick-design-dataverse-sap.md`: the same worked example as a markdown reply.
+- `SKILL.md`, `references/outputs.md` and `references/workflow.md` point Quick Design at the template.
+- "make a practice version" is accepted as the same request as "generate a synthetic starter".
+- Unchanged: the ≤5-question limit, the provisional status, no blueprint by default, the Full Build Pack contract, the schema and the validator.
+- `tests/test_quick_design_layout.py` checks the template, the example and the HTML page.
+
 ## 0.4.1 — 2026-11-02
 Fixes from the independent audit of the v0.4 review candidate. Rebased on `flowpilot-v0.3` (includes v0.3.1).
 

@@ -12,7 +12,8 @@ Turns integration requirements into clarified requirements (with stable IDs and 
   references/   workflow, Azure patterns, output contract, reference scenario
   assets/       integration-blueprint.schema.json (0.4.0), example-blueprint.json
   scripts/      validate_blueprint.py, render_report.py
-examples/       order-processing (draft), vague-sap-crm and conflicting-erp-sla (provisional)
+examples/       order-processing (draft), vague-sap-crm and conflicting-erp-sla (provisional),
+                quick-design-dataverse-sap.md (worked beginner-friendly Quick Design reply)
 tools/          thin wrappers + package_skill.py
 tests/          unit, regression (adversarial) and packaging tests
 ```

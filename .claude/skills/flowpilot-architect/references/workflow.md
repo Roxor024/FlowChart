@@ -1,7 +1,7 @@
 # Workflow and phase gates (v0.4)
 
 ## 0. Mode and complexity gate
-Default to Quick Design on first contact: restate the goal, identify blockers, ask at most five questions, and show a compact labelled architecture sketch. Full Build Pack (code, multiple diagrams, HTML, JSON and click-by-click manual) is opt-in or follows explicit user request. A user's direct request for a full synthetic pack authorizes an honest example even with missing contracts; never claim it works with SAP/Dataverse without those contracts.
+Default to Quick Design on first contact, written for a novice reader with `references/quick-design-template.md`: plain status line and one-sentence goal, requirements tagged Clear / Needs detail / Our guess, outcome checks, a five-step flow, an architecture diagram grouped by trust area, at most five questions with "Why we ask" and a "Not sure" choice, two next-step choices, then optional technical details. Full Build Pack (code, multiple diagrams, HTML, JSON and click-by-click manual) is opt-in or follows explicit user request. A user's direct request for a full synthetic pack authorizes an honest example even with missing contracts; never claim it works with SAP/Dataverse without those contracts.
 Architecture is chosen by constraints rather than by the reference example. Start with one Logic App when it meets volume, connectors, observability, transaction and retry requirements; add Service Bus, Functions, state store or sweeper only when a named constraint justifies it. Compare alternatives and show why any extra service earns its cost and complexity.
 
 ## 1. Intake
