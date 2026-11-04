@@ -18,6 +18,10 @@ The default Quick Design reply is now written for readers who are new to integra
 - New `examples/quick-design-dataverse-sap.md`: the same worked example as a markdown reply.
 - `SKILL.md`, `references/outputs.md` and `references/workflow.md` point Quick Design at the template.
 - "make a practice version" is accepted as the same request as "generate a synthetic starter".
+- How users answer:
+  - Clients with a multiple-choice question tool (AskUserQuestion in Claude Code, question cards in Claude.ai) get the questions as clickable cards.
+  - Otherwise choices are lettered (2–4 per question, "Not sure" last) and the reply ends with an answer-code line, e.g. `1A 2D 3B 4A 5C`.
+  - The HTML page no longer shows buttons that do nothing; it tells the user to reply in chat.
 - Unchanged: the ≤5-question limit, the provisional status, no blueprint by default, the Full Build Pack contract, the schema and the validator.
 - `tests/test_quick_design_layout.py` checks the template, the example and the HTML page.
 

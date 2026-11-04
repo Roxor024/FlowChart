@@ -18,6 +18,8 @@ a{color:#1F5FD1}a:hover{color:#174AA6}
 .pill input{position:absolute;opacity:0;width:1px;height:1px}
 .pill span{min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;padding:10px 16px;border-radius:10px;border:1px solid #C9D0D8;background:#FFFFFF;color:#17202B;font-weight:500;cursor:pointer}
 .pill input:checked+span{background:#1F5FD1;border-color:#1F5FD1;color:#FFFFFF;font-weight:600}
+.ltr{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-right:8px;border-radius:6px;background:#EEF1F5;color:#17202B;font-size:13px}
+.pill input:checked+span .ltr{background:#FFFFFF;color:#1F5FD1}
 .pill input:focus-visible+span{outline:3px solid #1F5FD1;outline-offset:2px}
 details>summary{list-style:none}
 details>summary::-webkit-details-marker{display:none}
@@ -171,6 +173,8 @@ details[open]>summary::after{content:"Hide details"}
 .s145{display:flex;flex-direction:column;gap:12px;font-size:14px}
 .s146{background:#E7EEFB;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
 .s147{font-size:14px;color:#2B3A55}
+.s148{align-self:flex-start;padding:12px 16px;border-radius:10px;background:#FFFFFF;color:#17202B;font-weight:700}
+.s149{align-self:flex-start;padding:12px 16px;border-radius:10px;border:1px solid #17202B;background:#FFFFFF;color:#17202B;font-weight:700}
 </style>
 </head>
 <body>
@@ -437,6 +441,7 @@ Created: English, German, French
 <div class="s21">
 <h2 class="s22">5 quick questions before we build</h2>
 <p class="s23">Pick the closest answer. “Not sure” is a fine answer — we’ll mark it as a gap.</p>
+<p class="s23"><strong class="s17">How to answer:</strong> this page can’t send anything. Reply in the chat with the question number and letter, e.g. <span class="s120">1B 2C 3A 4A 5C</span>. If your chat shows clickable question cards, click your answers there instead.</p>
 </div>
 </div>
 <fieldset class="s98">
@@ -445,7 +450,7 @@ Created: English, German, French
 <div class="s101">1</div>
 <div class="s21"><div class="s102">How does SAP accept a new consignment order?</div><div class="s103"><strong class="s17">Why we ask:</strong> We have to send orders in exactly the format SAP expects, or SAP rejects them.</div></div>
 </div>
-<div class="s104"><label class="pill"><input type="radio" name="q1" value="Web service (SOAP)"><span>Web service (SOAP)</span></label><label class="pill"><input type="radio" name="q1" value="BAPI / RFC function"><span>BAPI / RFC function</span></label><label class="pill"><input type="radio" name="q1" value="IDoc"><span>IDoc</span></label><label class="pill"><input type="radio" name="q1" value="OData API"><span>OData API</span></label><label class="pill"><input type="radio" name="q1" value="Not sure — I’ll ask the SAP team"><span>Not sure — I’ll ask the SAP team</span></label></div>
+<div class="s104"><label class="pill"><input type="radio" name="q1" value="Web service (SOAP)"><span><b class="ltr">A</b> Web service (SOAP)</span></label><label class="pill"><input type="radio" name="q1" value="BAPI / RFC function"><span><b class="ltr">B</b> BAPI / RFC function</span></label><label class="pill"><input type="radio" name="q1" value="IDoc or OData"><span><b class="ltr">C</b> IDoc or OData</span></label><label class="pill"><input type="radio" name="q1" value="Not sure — I’ll ask the SAP team"><span><b class="ltr">D</b> Not sure — I’ll ask the SAP team</span></label></div>
 <div class="s105">For your tech team: <span class="mono s106">SAP interface contract — WSDL/XSD, BAPI/RFC name, IDoc type or OData service; one or many product lines?</span></div>
 </fieldset>
 <fieldset class="s98">
@@ -454,7 +459,7 @@ Created: English, German, French
 <div class="s101">2</div>
 <div class="s21"><div class="s102">How can we be sure SAP really saved the order?</div><div class="s103"><strong class="s17">Why we ask:</strong> SAP can reply “OK” and still not save it. Checking stops lost or doubled orders.</div></div>
 </div>
-<div class="s104"><label class="pill"><input type="radio" name="q2" value="We can look the order up in SAP"><span>We can look the order up in SAP</span></label><label class="pill"><input type="radio" name="q2" value="SAP can store our Dataverse order ID"><span>SAP can store our Dataverse order ID</span></label><label class="pill"><input type="radio" name="q2" value="Both"><span>Both</span></label><label class="pill"><input type="radio" name="q2" value="Not sure"><span>Not sure</span></label></div>
+<div class="s104"><label class="pill"><input type="radio" name="q2" value="We can look the order up in SAP"><span><b class="ltr">A</b> We can look the order up in SAP</span></label><label class="pill"><input type="radio" name="q2" value="SAP can store our Dataverse order ID"><span><b class="ltr">B</b> SAP can store our Dataverse order ID</span></label><label class="pill"><input type="radio" name="q2" value="Both"><span><b class="ltr">C</b> Both</span></label><label class="pill"><input type="radio" name="q2" value="Not sure"><span><b class="ltr">D</b> Not sure</span></label></div>
 <div class="s105">For your tech team: <span class="mono s106">Commit + read-back; can SAP store the Dataverse ID as an external reference (idempotency)?</span></div>
 </fieldset>
 <fieldset class="s98">
@@ -463,7 +468,7 @@ Created: English, German, French
 <div class="s101">3</div>
 <div class="s21"><div class="s102">Where are the languages kept in Dataverse?</div><div class="s103"><strong class="s17">Why we ask:</strong> To match languages correctly (SAP calls German “D”, Dataverse calls it 1031).</div></div>
 </div>
-<div class="s104"><label class="pill"><input type="radio" name="q3" value="Dataverse’s built-in languages"><span>Dataverse’s built-in languages</span></label><label class="pill"><input type="radio" name="q3" value="Our own language table"><span>Our own language table</span></label><label class="pill"><input type="radio" name="q3" value="Not sure"><span>Not sure</span></label></div>
+<div class="s104"><label class="pill"><input type="radio" name="q3" value="Dataverse’s built-in languages"><span><b class="ltr">A</b> Dataverse’s built-in languages</span></label><label class="pill"><input type="radio" name="q3" value="Our own language table"><span><b class="ltr">B</b> Our own language table</span></label><label class="pill"><input type="radio" name="q3" value="Not sure"><span><b class="ltr">C</b> Not sure</span></label></div>
 <div class="s105">For your tech team: <span class="mono s106">Provisioned LCIDs or custom language table; SPRAS/LAISO ↔ Dataverse mapping; table + key column names</span></div>
 </fieldset>
 <fieldset class="s98">
@@ -472,7 +477,7 @@ Created: English, German, French
 <div class="s101">4</div>
 <div class="s21"><div class="s102">Should the user wait for SAP, or just see a status?</div><div class="s103"><strong class="s17">Why we ask:</strong> SAP can be slow. Showing a status (Processing → Synced) avoids timeouts.</div></div>
 </div>
-<div class="s104"><label class="pill"><input type="radio" name="q4" value="Show a status (recommended)"><span>Show a status (recommended)</span></label><label class="pill"><input type="radio" name="q4" value="Wait for the result"><span>Wait for the result</span></label><label class="pill"><input type="radio" name="q4" value="Not sure"><span>Not sure</span></label></div>
+<div class="s104"><label class="pill"><input type="radio" name="q4" value="Show a status (recommended)"><span><b class="ltr">A</b> Show a status (recommended)</span></label><label class="pill"><input type="radio" name="q4" value="Wait for the result"><span><b class="ltr">B</b> Wait for the result</span></label><label class="pill"><input type="radio" name="q4" value="Not sure"><span><b class="ltr">C</b> Not sure</span></label></div>
 <div class="s105">For your tech team: <span class="mono s106">Sync vs async; trigger: Power Automate, plugin/webhook or Dataverse connector; required fields</span></div>
 </fieldset>
 <fieldset class="s98">
@@ -481,7 +486,7 @@ Created: English, German, French
 <div class="s101">5</div>
 <div class="s21"><div class="s102">Where does your SAP system run?</div><div class="s103"><strong class="s17">Why we ask:</strong> This decides how Azure can reach SAP safely, and affects cost.</div></div>
 </div>
-<div class="s104"><label class="pill"><input type="radio" name="q5" value="In our own data centre"><span>In our own data centre</span></label><label class="pill"><input type="radio" name="q5" value="In a private cloud network"><span>In a private cloud network</span></label><label class="pill"><input type="radio" name="q5" value="Not sure"><span>Not sure</span></label></div>
+<div class="s104"><label class="pill"><input type="radio" name="q5" value="In our own data centre"><span><b class="ltr">A</b> In our own data centre</span></label><label class="pill"><input type="radio" name="q5" value="In a private cloud network"><span><b class="ltr">B</b> In a private cloud network</span></label><label class="pill"><input type="radio" name="q5" value="Not sure"><span><b class="ltr">C</b> Not sure</span></label></div>
 <div class="s105">For your tech team: <span class="mono s106">On-premises data gateway or VNet; Logic Apps Consumption vs Standard; identity for Dataverse</span></div>
 </fieldset>
 <div class="s107">
@@ -492,15 +497,15 @@ Created: English, German, French
 <section class="s111">
 <div class="s112">
 <div class="s113">I HAVE THE DETAILS</div>
-<div class="s114">Send my answers and build the real plan</div>
+<div class="s114">Send your answer codes and get the real plan</div>
 <div class="s115">You’ll get the workflow, test cases and a step-by-step setup guide based on your answers.</div>
-<button class="s116" type="button">Send my answers</button>
+<div class="s148">Reply in chat: <span class="mono">1B 2C 3A 4A 5C</span></div>
 </div>
 <div class="s117">
 <div class="s118">I DON’T HAVE THEM YET</div>
 <div class="s114">Make a practice version with sample data</div>
 <div class="s119">Same pack, but anything we don’t know is clearly marked <span class="s120">TODO</span>. Safe to explore — not ready for real use.</div>
-<button class="s121" type="button">Generate practice pack</button>
+<div class="s149">Reply in chat: <span class="mono">make a practice version</span></div>
 </div>
 </section>
 <details class="s122">
