@@ -18,6 +18,11 @@ Technical detail is welcome, but it goes last.
 - Keep sentences to 25 words or fewer. Write one idea per bullet. Never write a paragraph longer than three lines.
 - Label sample values as examples. Never invent real system names, table or field names, service limits or prices.
 - Ask at most FIVE questions. Never mark a question as answered unless the user answered it.
+- Give each question 2–4 choices lettered A, B, C…, with "Not sure" always last.
+- Where to ask them:
+  - If the client has a multiple-choice question tool (e.g. AskUserQuestion in Claude Code, question cards in Claude.ai), ask them there as clickable cards, after the reply text. Follow the tool's own limits, e.g. split five questions into two calls if it takes four at a time.
+  - Otherwise keep them in the reply and end with the answer-code line, so the user can reply with something like `1A 2D 3B`.
+  - Accept answer codes, free text or a mix. Ask again only about answers you could not map.
 - Keep the design provisional while blockers are open. Do not create a blueprint unless the user asks for one.
 
 | Instead of | Write |
@@ -110,16 +115,19 @@ Pick the closest answer. "Not sure" is fine; we'll mark it as a gap.
 
 **1. [Plain question]**
 Why we ask: [one sentence on the consequence]
-- [ ] [choice] · [ ] [choice] · [ ] [choice] · [ ] Not sure
+- **A** [choice] · **B** [choice] · **C** [choice] · **D** Not sure
+
 *For your tech team:* [precise technical ask, e.g. WSDL/XSD or BAPI name; one or several product lines?]
 
 *(repeat; at most five questions; most important first)*
+
+**How to answer:** reply with the question number and letter, e.g. `1A 2D 3B 4A 5C`. You can add words too: `1A, 3: we use our own table`.
 
 ## What happens next
 
 | I have the details | I don't have them yet |
 |---|---|
-| Answer the questions above. You'll get the real plan: workflow, tests and a step-by-step setup guide. | Say **"make a practice version"**. You'll get the same pack with sample data. Anything unknown is marked `TODO`. Safe to explore, not for real use. |
+| Reply with your answer codes. You'll get the real plan: workflow, tests and a step-by-step setup guide. | Say **"make a practice version"**. You'll get the same pack with sample data. Anything unknown is marked `TODO`. Safe to explore, not for real use. |
 
 ---
 

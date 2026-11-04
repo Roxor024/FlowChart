@@ -10,7 +10,7 @@
 5. **Our suggestion**: one sentence naming the simplest viable design. Alternatives belong in the technical section.
 6. **The scenario's key rule as an example** (for instance "SAP has X · Dataverse has Y → created / skipped / ignored"), and that ambiguous matches are flagged for a person, never guessed.
 7. **Mistakes it protects you from**: 3–4 plain promises that the design really delivers.
-8. **Questions (at most five)**: plain title, "Why we ask:" in one sentence, 2–5 answer choices always including "Not sure" (recorded as a gap), and a "For your tech team:" line with the precise technical ask.
+8. **Questions (at most five)**: plain title, "Why we ask:" in one sentence, 2–4 answer choices lettered A, B, C… with "Not sure" always last (recorded as a gap), and a "For your tech team:" line with the precise technical ask. Ask them as clickable cards when the client has a multiple-choice question tool; otherwise end the list with an answer-code line ("Reply like: 1A 2D 3B 4A 5C"). Answer codes, free text and a mix are all accepted.
 9. **Next step**: two labelled choices, "I have the details" (answer the questions) and "I don't have them yet" (say "make a practice version" for a Full Build Pack with sample data and marked TODOs, not for real use).
 10. **Technical details for engineers** (optional, last): REQ table with what is still unknown, numbered workflow steps, trade-offs, alternative and "not recommended yet".
 11. **Where things stand**: Idea understood · Your answers (0 of N) · Automatically checked · Reviewed by a person · Deployed (never by FlowPilot), followed by the standard Validation / Deployment / Human review lines saying the same thing.
