@@ -11,9 +11,9 @@ Turns integration requirements into clarified requirements (with stable IDs and 
   SKILL.md
   references/   workflow, Azure patterns, output contract, reference scenario
   assets/       integration-blueprint.schema.json (0.4.0), example-blueprint.json
-  scripts/      validate_blueprint.py, render_report.py
+  scripts/      validate_blueprint.py, render_report.py, render_quick_design.py
 examples/       order-processing (draft), vague-sap-crm and conflicting-erp-sla (provisional),
-                quick-design-dataverse-sap.md (worked beginner-friendly Quick Design reply)
+                quick-design-dataverse-sap.md (markdown Quick Design reply), quick-design-sftp.json (page input)
 tools/          thin wrappers + package_skill.py
 tests/          unit, regression (adversarial) and packaging tests
 ```
@@ -33,6 +33,7 @@ python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v
 python tools/validate_blueprint.py examples/order-processing/integration-blueprint.json
 python tools/render_report.py examples/order-processing/integration-blueprint.json output/order-processing-report.html
+python .claude/skills/flowpilot-architect/scripts/render_quick_design.py examples/quick-design-sftp.json output/quick-design-sftp.html
 ```
 Validator exit codes: `0` passed automated checks (not approval) · `1` invalid · `2` unreadable · `3` not executed (`jsonschema` missing). Warnings do not fail validation.
 

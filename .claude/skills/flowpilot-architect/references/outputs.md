@@ -18,6 +18,8 @@
 
 Writing rules: sentences of 25 words or fewer, one idea per bullet, no paragraph over three lines, sample values labelled as examples, no invented system names, field names or limits. Keep the ≤5 questions, provisional-status and no-blueprint rules. Do NOT generate the long ten-section manual or code ZIP by default. A worked example is in `examples/quick-design-dataverse-sap.md` at the repository root (not packaged).
 
+**Delivery.** Put the content in `quick-design.json` (shape: `assets/quick-design.example.json`) and render it with `scripts/render_quick_design.py`; deliver the page plus a 3–5 line chat summary and the questions (clickable cards when available, otherwise lettered with an answer-code line). Never hand-write the page's HTML. Without Python or file access, reply in markdown with the template. Aim to finish within 60 seconds: read only SKILL.md, the template and the example JSON.
+
 **Full Build Pack: opt-in or explicitly requested.** Apply the sections below only in this mode. A provisional build pack may contain synthetic adapters, but its missing WSDL and Dataverse schema must be prominent.
 
 The user's primary output is an implementation guide, not JSON and not an architecture audit. Keep the machine-readable blueprint in a separate advanced export; it provides validation, traceability and future automation.
