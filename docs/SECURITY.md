@@ -6,3 +6,8 @@
 - Never fabricate test success or human approval.
 - Run generated code only in an approved sandbox and review outputs before production.
 - Check employment and IP arrangements before using employer-specific materials.
+- Never request or accept production credentials; the validator rejects common secret formats in blueprints.
+- Approval needs a human reviewer and a reference to an external review record; the validator rejects AI/tool reviewer names but cannot prove identity, so verify the record.
+- Test results count only with CI- or human-supplied evidence (time, environment, SHA-256 of the result artifact).
+- CI runs a gitleaks secret scan on every push; test fixtures with fake credentials are allowlisted in `.gitleaks.toml`.
+- Reports are only rendered from blueprints that pass validation; approvals are displayed as claims, never as authenticated sign-off.

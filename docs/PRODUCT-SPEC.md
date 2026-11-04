@@ -1,4 +1,4 @@
-# FlowPilot v0.2 product specification
+# FlowPilot v0.4 product specification
 
 Goal: help an Azure integration engineer navigate requirements, architectural tradeoffs, implementation, testing, security review and operations with one coherent, traceable engineering blueprint.
 
@@ -7,3 +7,5 @@ MVP outputs: requirements and assumptions, architecture diagram, ADRs, build che
 Requirements: explicit unknowns/conflicts, safe defaults, stable IDs, validation and review-state evidence.
 Non-goals: production deployment, automatic credentials use, cloud inventory, real-time monitoring, production signoff.
 Pilot gate: test across order processing, synchronous lookup, event fan-out, file/SFTP, vague requests, conflicting requirements, and sensitive data.
+Status model: provisional (insufficient requirements), draft (complete proposal), approved (external human review evidence only).
+Pilot gate evidence: `examples/` covers order processing, a vague request and a contradictory request; scenarios A–C and F (synchronous lookup, fan-out, SFTP, sensitive data) still need behavioural evaluation in fresh sessions.

@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick Design — Dataverse to SAP (example)</title>
+<!--
+  FlowPilot Quick Design page: self-contained, no external scripts, fonts or images.
+  This file is a FILLED WORKED EXAMPLE (Dataverse consignment order -> SAP -> translations).
+  To reuse it, keep the section order and replace the example content, following
+  references/quick-design-template.md. Do not claim validation, review or deployment.
+-->
+<style>
+body{margin:0}
+a{color:#1F5FD1}a:hover{color:#174AA6}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.pill{display:inline-flex}
+.pill input{position:absolute;opacity:0;width:1px;height:1px}
+.pill span{min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;padding:10px 16px;border-radius:10px;border:1px solid #C9D0D8;background:#FFFFFF;color:#17202B;font-weight:500;cursor:pointer}
+.pill input:checked+span{background:#1F5FD1;border-color:#1F5FD1;color:#FFFFFF;font-weight:600}
+.ltr{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-right:8px;border-radius:6px;background:#EEF1F5;color:#17202B;font-size:13px}
+.pill input:checked+span .ltr{background:#FFFFFF;color:#1F5FD1}
+.pill input:focus-visible+span{outline:3px solid #1F5FD1;outline-offset:2px}
+details>summary{list-style:none}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"Show details";align-self:flex-start;margin-top:8px;padding:8px 14px;border-radius:10px;border:1px solid #C9D0D8;background:#F7F9FC;font-weight:600}
+details[open]>summary::after{content:"Hide details"}
+.s0{min-height:100vh;background:#F4F6F8;font-family:system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;color:#17202B;font-size:16px;line-height:1.55}
+.s1{background:#FFFFFF;border-bottom:1px solid #E2E6EB}
+.s2{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.s3{display:flex;align-items:center;gap:10px}
+.s4{width:32px;height:32px;border-radius:8px;background:#17202B;display:flex;align-items:center;justify-content:center}
+.s5{font-weight:700}
+.s6{color:#5B6573}
+.s7{display:flex;align-items:center;gap:8px;background:#FFF7ED;color:#9A3F07;border:1px solid #F6D7B8;padding:6px 12px;border-radius:999px;font-size:14px;font-weight:600}
+.s8{max-width:1200px;margin:0 auto;padding:32px 24px 72px;display:flex;flex-direction:column;gap:28px}
+.s9{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.s10{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:#EAF6EF;color:#115E39;font-weight:600;font-size:14px}
+.s11{width:24px;height:2px;background:#C9D0D8}
+.s12{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:#1F5FD1;color:#FFFFFF;font-weight:600;font-size:14px}
+.s13{padding:8px 14px;border-radius:999px;background:#FFFFFF;border:1px solid #D5DAE0;color:#4A5563;font-weight:600;font-size:14px}
+.s14{display:flex;flex-direction:column;gap:12px;max-width:820px}
+.s15{margin:0;font-size:40px;line-height:1.15;font-weight:800;letter-spacing:-0.02em}
+.s16{margin:0;font-size:19px;color:#3D4652}
+.s17{color:#17202B}
+.s18{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.s19{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:28px}
+.s20{background:#FFFFFF;border:1px solid #E2E6EB;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:20px}
+.s21{display:flex;flex-direction:column;gap:4px}
+.s22{margin:0;font-size:24px;font-weight:700}
+.s23{margin:0;color:#4A5563}
+.s24{display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:16px;align-items:start}
+.s25{border:1px solid #E2E6EB;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.s26{font-weight:700;font-size:18px}
+.s27{display:flex;flex-wrap:wrap;gap:8px;font-size:13px}
+.s28{padding:2px 8px;border-radius:999px;background:#EAF6EF;color:#115E39;font-weight:700}
+.s29{padding:2px 8px;border-radius:999px;background:#FFF7ED;color:#9A3F07;font-weight:700}
+.s30{padding:2px 8px;border-radius:999px;background:#EEF1F5;color:#3D4652;font-weight:700}
+.s31{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+.s32{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.s33{flex:none;padding:2px 8px;border-radius:999px;background:#EAF6EF;color:#115E39;font-size:13px;font-weight:700}
+.s34{flex:none;padding:2px 8px;border-radius:999px;background:#FFF7ED;color:#9A3F07;font-size:13px;font-weight:700}
+.s35{flex:none;padding:2px 8px;border-radius:999px;background:#EEF1F5;color:#3D4652;font-size:13px;font-weight:700}
+.s36{border:2px solid #157347;background:#F6FBF8;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.s37{font-size:15px;color:#2C4A3A}
+.s38{display:flex;flex-direction:column;gap:12px}
+.s39{display:flex;gap:10px;align-items:flex-start}
+.s40{flex:none;margin-top:2px}
+.s41{font-size:14px;color:#3D4652;background:#FFFFFF;border:1px solid #D5E9DD;border-radius:10px;padding:12px}
+.s42{display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:12px}
+.s43{background:#F7F9FC;border:1px solid #E2E6EB;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.s44{display:flex;align-items:center;justify-content:space-between}
+.s45{width:40px;height:40px;border-radius:10px;background:#E7EEFB;color:#1F5FD1;display:flex;align-items:center;justify-content:center}
+.s46{font-size:13px;font-weight:700;color:#5B6573}
+.s47{font-size:14px;color:#4A5563}
+.s48{background:#EAF6EF;border:1px solid #BFE3CD;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.s49{width:40px;height:40px;border-radius:10px;background:#FFFFFF;color:#157347;display:flex;align-items:center;justify-content:center}
+.s50{font-size:13px;font-weight:700;color:#115E39}
+.s51{font-size:14px;color:#2C4A3A}
+.s52{display:flex;gap:12px;align-items:flex-start;background:#F7F9FC;border-radius:12px;padding:16px}
+.s53{overflow-x:auto}
+.s54{position:relative;width:768px;height:392px;font-size:14px;line-height:1.4}
+.s55{position:absolute;left:0px;top:0px;width:200px;height:392px;background:#F4F1FA;border-radius:12px}
+.s56{position:absolute;left:248px;top:0px;width:272px;height:392px;background:#EEF3FC;border-radius:12px}
+.s57{position:absolute;left:568px;top:0px;width:200px;height:392px;background:#F6F3EE;border-radius:12px}
+.s58{position:absolute;left:16px;top:16px;font-size:12px;font-weight:700;letter-spacing:0.06em;color:#4A3F6B}
+.s59{position:absolute;left:264px;top:16px;font-size:12px;font-weight:700;letter-spacing:0.06em;color:#1F4A99}
+.s60{position:absolute;left:584px;top:16px;font-size:12px;font-weight:700;letter-spacing:0.06em;color:#5E4A2E}
+.s61{position:absolute;left:184px;top:108px;width:95px;height:8px;overflow:visible;fill:none;stroke:#3D4652;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.s62{stroke:none;fill:#3D4652;fill:context-stroke}
+.s63{position:absolute;left:185px;top:156px;width:95px;height:8px;overflow:visible;fill:none;stroke:#3D4652;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.s64{position:absolute;left:488px;top:108px;width:95px;height:8px;overflow:visible;fill:none;stroke:#3D4652;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.s65{position:absolute;left:489px;top:156px;width:95px;height:8px;overflow:visible;fill:none;stroke:#3D4652;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.s66{position:absolute;left:304px;top:208px;width:8px;height:55px;overflow:visible;fill:none;stroke:#6B7480;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:6 6}
+.s67{stroke:none;fill:#6B7480;fill:context-stroke}
+.s68{position:absolute;left:456px;top:208px;width:8px;height:55px;overflow:visible;fill:none;stroke:#6B7480;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:6 6}
+.s69{position:absolute;left:16px;top:64px;width:168px;height:144px;box-sizing:border-box;padding:12px;display:flex;align-items:center;justify-content:center;text-align:center;background:#FFFFFF;border:1px solid #C9D0D8;border-radius:12px}
+.s70{font-size:16px}
+.s71{position:absolute;left:280px;top:64px;width:208px;height:144px;box-sizing:border-box;padding:12px;display:flex;align-items:center;justify-content:center;text-align:center;background:#FFFFFF;border:2px solid #1F5FD1;border-radius:12px}
+.s72{position:absolute;left:584px;top:64px;width:168px;height:144px;box-sizing:border-box;padding:12px;display:flex;align-items:center;justify-content:center;text-align:center;background:#FFFFFF;border:1px solid #C9D0D8;border-radius:12px}
+.s73{position:absolute;left:256px;top:264px;width:104px;height:112px;box-sizing:border-box;padding:8px;display:flex;align-items:center;justify-content:center;text-align:center;background:#FFFFFF;border:1px solid #C9D0D8;border-radius:12px;font-size:13px}
+.s74{font-size:14px}
+.s75{position:absolute;left:408px;top:264px;width:104px;height:112px;box-sizing:border-box;padding:8px;display:flex;align-items:center;justify-content:center;text-align:center;background:#FFFFFF;border:1px solid #C9D0D8;border-radius:12px;font-size:13px}
+.s76{position:absolute;left:584px;top:264px;width:168px;height:112px;box-sizing:border-box;padding:10px;display:flex;align-items:center;justify-content:center;text-align:center;background:#FFFFFF;border:1px dashed #8A6D45;border-radius:12px;font-size:13px}
+.s77{position:absolute;left:220px;top:80px;width:24px;height:24px;border-radius:999px;background:#17202B;color:#FFFFFF;font-size:13px;font-weight:700;line-height:24px;text-align:center}
+.s78{position:absolute;left:524px;top:80px;width:24px;height:24px;border-radius:999px;background:#17202B;color:#FFFFFF;font-size:13px;font-weight:700;line-height:24px;text-align:center}
+.s79{position:absolute;left:524px;top:168px;width:24px;height:24px;border-radius:999px;background:#17202B;color:#FFFFFF;font-size:13px;font-weight:700;line-height:24px;text-align:center}
+.s80{position:absolute;left:220px;top:168px;width:24px;height:24px;border-radius:999px;background:#17202B;color:#FFFFFF;font-size:13px;font-weight:700;line-height:24px;text-align:center}
+.s81{display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px;font-size:14px}
+.s82{flex:none;width:24px;height:24px;border-radius:999px;background:#17202B;color:#FFFFFF;font-size:13px;font-weight:700;line-height:24px;text-align:center}
+.s83{font-size:13px;color:#5B6573}
+.s84{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;align-items:stretch}
+.s85{border:1px solid #E2E6EB;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.s86{display:flex;flex-wrap:wrap;gap:8px}
+.s87{padding:6px 12px;border-radius:8px;background:#EEF1F5;font-weight:600}
+.s88{border:2px solid #1F5FD1;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;background:#F5F8FE}
+.s89{display:flex;flex-direction:column;gap:8px}
+.s90{display:flex;align-items:center;gap:8px;font-weight:600;color:#115E39}
+.s91{display:flex;align-items:flex-start;gap:8px;font-weight:600;color:#9A3F07}
+.s92{flex:none;margin-top:3px}
+.s93{font-weight:400;color:#4A5563}
+.s94{font-size:14px;color:#4A5563;background:#F7F9FC;border-radius:10px;padding:12px 14px}
+.s95{display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px}
+.s96{display:flex;gap:12px;align-items:flex-start;padding:16px;border:1px solid #E2E6EB;border-radius:12px}
+.s97{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}
+.s98{border:1px solid #E2E6EB;border-radius:14px;padding:20px;margin:0;display:flex;flex-direction:column;gap:14px}
+.s99{padding:0 6px;font-size:13px;font-weight:700;color:#9A3F07}
+.s100{display:flex;gap:12px;align-items:flex-start}
+.s101{flex:none;width:32px;height:32px;border-radius:999px;background:#17202B;color:#FFFFFF;font-weight:700;display:flex;align-items:center;justify-content:center}
+.s102{font-size:18px;font-weight:700}
+.s103{font-size:15px;color:#4A5563}
+.s104{display:flex;flex-wrap:wrap;gap:8px;padding-left:44px}
+.s105{padding-left:44px;font-size:13px;color:#5B6573}
+.s106{color:#3D4652}
+.s107{display:flex;flex-direction:column;gap:6px}
+.s108{font-weight:600}
+.s109{font-weight:400;color:#5B6573}
+.s110{font:inherit;width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #C9D0D8;resize:vertical}
+.s111{display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px}
+.s112{background:#17202B;color:#FFFFFF;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.s113{font-size:14px;font-weight:700;color:#B9C6FF}
+.s114{font-size:20px;font-weight:700}
+.s115{color:#D3D9E2}
+.s116{align-self:flex-start;min-height:48px;padding:12px 20px;border-radius:10px;border:none;background:#FFFFFF;color:#17202B;font:inherit;font-weight:700;cursor:pointer}
+.s117{background:#FFFFFF;border:1px solid #E2E6EB;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.s118{font-size:14px;font-weight:700;color:#4A5563}
+.s119{color:#4A5563}
+.s120{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;background:#FFF7ED;color:#9A3F07;padding:1px 6px;border-radius:4px}
+.s121{align-self:flex-start;min-height:48px;padding:12px 20px;border-radius:10px;border:1px solid #17202B;background:#FFFFFF;color:#17202B;font:inherit;font-weight:700;cursor:pointer}
+.s122{background:#FFFFFF;border:1px solid #E2E6EB;border-radius:16px;padding:20px 28px}
+.s123{cursor:pointer;min-height:44px;display:flex;flex-direction:column;justify-content:center}
+.s124{display:flex;flex-direction:column;gap:20px;border-top:1px solid #E2E6EB;padding-top:20px}
+.s125{overflow-x:auto;border:1px solid #E2E6EB;border-radius:10px}
+.s126{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+.s127{background:#F7F9FC;text-align:left}
+.s128{padding:10px 12px}
+.s129{border-top:1px solid #E2E6EB}
+.s130{padding:10px 12px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+.s131{padding:10px 12px;color:#4A5563}
+.s132{padding:10px 12px;color:#9A3F07}
+.s133{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.s134{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+.s135{display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:12px;font-size:14px}
+.s136{border:1px solid #E2E6EB;border-radius:10px;padding:14px}
+.s137{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.s138{background:#FFFFFF;border:1px solid #E2E6EB;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.s139{display:flex;flex-direction:column;gap:12px;font-size:15px}
+.s140{display:flex;justify-content:space-between;gap:8px}
+.s141{font-weight:700;color:#115E39}
+.s142{font-weight:700;color:#9A3F07}
+.s143{font-weight:600;color:#4A5563}
+.s144{font-size:13px;color:#5B6573;border-top:1px solid #E2E6EB;padding-top:12px}
+.s145{display:flex;flex-direction:column;gap:12px;font-size:14px}
+.s146{background:#E7EEFB;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
+.s147{font-size:14px;color:#2B3A55}
+.s148{align-self:flex-start;padding:12px 16px;border-radius:10px;background:#FFFFFF;color:#17202B;font-weight:700}
+.s149{align-self:flex-start;padding:12px 16px;border-radius:10px;border:1px solid #17202B;background:#FFFFFF;color:#17202B;font-weight:700}
+</style>
+</head>
+<body>
+<div class="s0">
+<div class="s1">
+<div class="s2">
+<div class="s3">
+<div class="s4">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h6l2-5 3 10 2-5h3"></path></svg>
+</div>
+<span class="s5">FlowPilot</span>
+<span class="s6">/ Quick Design</span>
+</div>
+<div class="s7">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+Draft idea · nothing has been built yet
+</div>
+</div>
+</div>
+<div class="s8">
+<div class="s9" aria-label="Progress">
+<div class="s10">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+1 · We understood your idea
+</div>
+<div class="s11"></div>
+<div class="s12">2 · We need a few answers</div>
+<div class="s11"></div>
+<div class="s13">3 · We build your starter pack</div>
+<div class="s11"></div>
+<div class="s13">4 · A person reviews it</div>
+</div>
+<div class="s14">
+<h1 class="s15">Send new consignment orders from Dataverse to SAP — automatically</h1>
+<p class="s16">When someone creates a consignment order, it’s created in SAP for them, the product’s translations are copied back, and the order is marked <strong class="s17">Synced</strong>. No copy-pasting between systems.</p>
+</div>
+<div class="s18">
+<div class="s19">
+<section class="s20">
+<div class="s21">
+<h2 class="s22">What you asked for, and what you’ll get</h2>
+<p class="s23">Check that we understood you. If something is wrong, say so in the questions below.</p>
+</div>
+<div class="s24">
+<div class="s25">
+<div class="s3">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5FD1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg>
+<div class="s26">Requirements</div>
+</div>
+<div class="s27">
+<span class="s28">Clear</span>
+<span class="s29">Needs detail</span>
+<span class="s30">Our guess</span>
+</div>
+<ol class="s31">
+<li class="s32"><span><strong>1.</strong> Start when someone creates a consignment order in Dataverse</span><span class="s33">Clear</span></li>
+<li class="s32"><span><strong>2.</strong> Check that all needed information is there</span><span class="s34">Needs detail</span></li>
+<li class="s32"><span><strong>3.</strong> Convert the order into SAP’s format</span><span class="s34">Needs detail</span></li>
+<li class="s32"><span><strong>4.</strong> Create the consignment in SAP</span><span class="s33">Clear</span></li>
+<li class="s32"><span><strong>5.</strong> Find which languages the product has in SAP</span><span class="s33">Clear</span></li>
+<li class="s32"><span><strong>6.</strong> Copy translations only for languages Dataverse also has</span><span class="s33">Clear</span></li>
+<li class="s32"><span><strong>7.</strong> Mark the order “Synced with SAP”</span><span class="s33">Clear</span></li>
+<li class="s32"><span><strong>8.</strong> A few orders a day, one at a time</span><span class="s35">Our guess</span></li>
+</ol>
+</div>
+<div class="s36">
+<div class="s3">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#157347" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle></svg>
+<div class="s26">The outcome: how we’ll know it works</div>
+</div>
+<div class="s37">Every one of these will be tested before you use it.</div>
+<div class="s38">
+<div class="s39">
+<svg class="s40" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#157347" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+<span>An order with missing information <strong>never reaches SAP</strong>. You see the reason on the order.</span>
+</div>
+<div class="s39">
+<svg class="s40" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#157347" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+<span>“Synced” appears <strong>only</strong> when SAP has confirmed the order and every translation was saved.</span>
+</div>
+<div class="s39">
+<svg class="s40" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#157347" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+<span>Only languages in <strong>both</strong> systems get a translation. Skipped languages are listed with a reason.</span>
+</div>
+<div class="s39">
+<svg class="s40" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#157347" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+<span>Running it twice <strong>never</strong> creates a second SAP order or duplicate translations.</span>
+</div>
+</div>
+<div class="s41">
+<strong>Example:</strong> SAP has English, German, French, Polish. Dataverse has English, German, French, Dutch. → 3 translations created, Polish skipped, order marked <strong>Synced</strong>.
+</div>
+</div>
+</div>
+</section>
+<section class="s20">
+<div class="s21">
+<h2 class="s22">How it will work</h2>
+<p class="s23">Five steps, all done by one automated workflow in Azure.</p>
+</div>
+<div class="s42">
+<div class="s43">
+<div class="s44">
+<div class="s45">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6"></path><path d="M12 12v6M9 15h6"></path></svg>
+</div>
+<span class="s46">STEP 1</span>
+</div>
+<div class="s5">You create a consignment order</div>
+<div class="s47">From a work order in Dataverse, like you do today.</div>
+</div>
+<div class="s43">
+<div class="s44">
+<div class="s45">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l2 2 4-4"></path><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path></svg>
+</div>
+<span class="s46">STEP 2</span>
+</div>
+<div class="s5">We check nothing is missing</div>
+<div class="s47">If something is missing, you see a clear message on the order.</div>
+</div>
+<div class="s43">
+<div class="s44">
+<div class="s45">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"></rect><rect x="3" y="14" width="18" height="6" rx="1.5"></rect><path d="M7 7h.01M7 17h.01"></path></svg>
+</div>
+<span class="s46">STEP 3</span>
+</div>
+<div class="s5">We create it in SAP — and double-check</div>
+<div class="s47">We confirm SAP really saved it before moving on.</div>
+</div>
+<div class="s43">
+<div class="s44">
+<div class="s45">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg>
+</div>
+<span class="s46">STEP 4</span>
+</div>
+<div class="s5">We copy the product’s translations</div>
+<div class="s47">Only for languages both systems use. <a href="#languages">See the rule</a></div>
+</div>
+<div class="s48">
+<div class="s44">
+<div class="s49">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.5 2.5L16 9.5"></path></svg>
+</div>
+<span class="s50">STEP 5</span>
+</div>
+<div class="s5">The order is marked “Synced”</div>
+<div class="s51">Only when every step above has worked.</div>
+</div>
+</div>
+<div class="s52">
+<svg class="s40" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5FD1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4"></path><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"></path></svg>
+<div><strong>Our suggestion: keep it simple.</strong> One Azure Logic App (an automated workflow) runs all five steps. We’ll only add extra pieces if your answers show we need them.</div>
+</div>
+</section>
+<section class="s20">
+<div class="s21">
+<h2 class="s22">Architecture: which systems talk to each other</h2>
+<p class="s23">Three areas, one workflow in the middle. The numbers show the order things happen.</p>
+</div>
+<div class="s53">
+<div class="s54">
+<div class="s55"></div>
+<div class="s56"></div>
+<div class="s57"></div>
+<div class="s58">POWER PLATFORM</div>
+<div class="s59">AZURE</div>
+<div class="s60">YOUR COMPANY NETWORK</div>
+<svg class="s61" aria-hidden="true" width="95" height="8" viewBox="0 0 95 8" preserveAspectRatio="none"><defs><marker id="dc-arrow-head-filled-1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path class="s62" d="M0 0 L4 2 L0 4 Z" fill="#3D4652" stroke="none"></path></marker></defs><path d="M 0 4 L 91 4" marker-end="url(#dc-arrow-head-filled-1)"></path></svg>
+<svg class="s63" aria-hidden="true" width="95" height="8" viewBox="0 0 95 8" preserveAspectRatio="none"><defs><marker id="dc-arrow-head-filled-2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path class="s62" d="M0 0 L4 2 L0 4 Z" fill="#3D4652" stroke="none"></path></marker></defs><path d="M 95 4 L 4 4" marker-end="url(#dc-arrow-head-filled-2)"></path></svg>
+<svg class="s64" aria-hidden="true" width="95" height="8" viewBox="0 0 95 8" preserveAspectRatio="none"><defs><marker id="dc-arrow-head-filled-3" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path class="s62" d="M0 0 L4 2 L0 4 Z" fill="#3D4652" stroke="none"></path></marker></defs><path d="M 0 4 L 91 4" marker-end="url(#dc-arrow-head-filled-3)"></path></svg>
+<svg class="s65" aria-hidden="true" width="95" height="8" viewBox="0 0 95 8" preserveAspectRatio="none"><defs><marker id="dc-arrow-head-filled-4" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path class="s62" d="M0 0 L4 2 L0 4 Z" fill="#3D4652" stroke="none"></path></marker></defs><path d="M 95 4 L 4 4" marker-end="url(#dc-arrow-head-filled-4)"></path></svg>
+<svg class="s66" aria-hidden="true" width="8" height="55" viewBox="0 0 8 55" preserveAspectRatio="none"><defs><marker id="dc-arrow-head-filled-5" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path class="s67" d="M0 0 L4 2 L0 4 Z" fill="#6B7480" stroke="none"></path></marker></defs><path d="M 4 0 L 4 51" marker-end="url(#dc-arrow-head-filled-5)"></path></svg>
+<svg class="s68" aria-hidden="true" width="8" height="55" viewBox="0 0 8 55" preserveAspectRatio="none"><defs><marker id="dc-arrow-head-filled-6" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path class="s67" d="M0 0 L4 2 L0 4 Z" fill="#6B7480" stroke="none"></path></marker></defs><path d="M 4 0 L 4 51" marker-end="url(#dc-arrow-head-filled-6)"></path></svg>
+<div class="s69"><span><b class="s70">Dataverse</b><br>Consignment order and its product translations</span></div>
+<div class="s71"><span><b class="s70">Logic App</b><br>One automated workflow: check → create in SAP → copy translations → mark Synced</span></div>
+<div class="s72"><span><b class="s70">SAP</b><br>Creates the consignment and holds product texts</span></div>
+<div class="s73"><span><b class="s74">Key Vault</b><br>Keeps the SAP password safe</span></div>
+<div class="s75"><span><b class="s74">Monitoring</b><br>Run history and alerts</span></div>
+<div class="s76"><span><b class="s74">Secure connection</b><br>Data gateway or private network (to confirm, question 5)</span></div>
+<div class="s77">1</div>
+<div class="s78">2</div>
+<div class="s79">3</div>
+<div class="s80">4</div>
+</div>
+</div>
+<div class="s81">
+<div class="s39"><span class="s82">1</span><span>Dataverse sends the new order to the workflow.</span></div>
+<div class="s39"><span class="s82">2</span><span>The workflow creates the consignment in SAP.</span></div>
+<div class="s39"><span class="s82">3</span><span>SAP confirms it and returns the product’s translations.</span></div>
+<div class="s39"><span class="s82">4</span><span>Matching translations are saved and the order is marked Synced.</span></div>
+</div>
+<div class="s83">Dashed lines: the workflow reads the SAP password from Key Vault and sends its run history to Monitoring. All SAP traffic goes through the secure connection.</div>
+</section>
+<section class="s20" id="languages">
+<div class="s21">
+<h2 class="s22">The language rule, in a picture</h2>
+<p class="s23">We only create a translation when <strong class="s17">both</strong> systems know the language. Everything else is skipped and written to a log. <span class="s6">(Example languages.)</span></p>
+</div>
+<div class="s84">
+<div class="s85">
+<div class="s5">SAP has the product in</div>
+<div class="s86">
+<span class="s87">English</span>
+<span class="s87">German</span>
+<span class="s87">French</span>
+<span class="s87">Polish</span>
+</div>
+</div>
+<div class="s85">
+<div class="s5">Dataverse uses</div>
+<div class="s86">
+<span class="s87">English</span>
+<span class="s87">German</span>
+<span class="s87">French</span>
+<span class="s87">Dutch</span>
+</div>
+</div>
+<div class="s88">
+<div class="s5">Result on your order</div>
+<div class="s89">
+<div class="s90">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+Created: English, German, French
+</div>
+<div class="s91">
+<svg class="s92" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+<span>Skipped: Polish <span class="s93">— Dataverse doesn’t use it</span></span>
+</div>
+<div class="s47">Dutch is ignored — SAP has no Dutch text for this product.</div>
+</div>
+</div>
+</div>
+<div class="s94">If a language could match two options (e.g. “English” → US or UK), we don’t guess. We flag it for a person to check. If no languages match at all, the order shows “Needs checking” instead of Synced.</div>
+</section>
+<section class="s20">
+<div class="s21">
+<h2 class="s22">Mistakes it protects you from</h2>
+<p class="s23">These are built in, whatever your answers are.</p>
+</div>
+<div class="s95">
+<div class="s96">
+<svg class="s40" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5FD1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path><path d="M3 21L21 3"></path></svg>
+<div><div class="s5">No duplicate orders</div><div class="s47">If the flow runs twice, SAP still gets only one order.</div></div>
+</div>
+<div class="s96">
+<svg class="s40" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5FD1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-5-5"></path></svg>
+<div><div class="s5">No false “success”</div><div class="s47">SAP can say “OK” with warnings and still not save. We read the order back to be sure.</div></div>
+</div>
+<div class="s96">
+<svg class="s40" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5FD1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path></svg>
+<div><div class="s5">No endless loops</div><div class="s47">When we mark the order “Synced”, that change won’t start the flow again.</div></div>
+</div>
+<div class="s96">
+<svg class="s40" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5FD1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"></path><path d="M10.3 3.9L2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg>
+<div><div class="s5">Problems are visible</div><div class="s47">If anything is unsure, the order says “Needs checking” instead of failing silently.</div></div>
+</div>
+</div>
+</section>
+<section class="s20" id="questions">
+<div class="s97">
+<div class="s21">
+<h2 class="s22">5 quick questions before we build</h2>
+<p class="s23">Pick the closest answer. “Not sure” is a fine answer — we’ll mark it as a gap.</p>
+<p class="s23"><strong class="s17">How to answer:</strong> this page can’t send anything. Reply in the chat with the question number and letter, e.g. <span class="s120">1B 2C 3A 4A 5C</span>. If your chat shows clickable question cards, click your answers there instead.</p>
+</div>
+</div>
+<fieldset class="s98">
+<legend class="s99">Question 1 of 5</legend>
+<div class="s100">
+<div class="s101">1</div>
+<div class="s21"><div class="s102">How does SAP accept a new consignment order?</div><div class="s103"><strong class="s17">Why we ask:</strong> We have to send orders in exactly the format SAP expects, or SAP rejects them.</div></div>
+</div>
+<div class="s104"><label class="pill"><input type="radio" name="q1" value="Web service (SOAP)"><span><b class="ltr">A</b> Web service (SOAP)</span></label><label class="pill"><input type="radio" name="q1" value="BAPI / RFC function"><span><b class="ltr">B</b> BAPI / RFC function</span></label><label class="pill"><input type="radio" name="q1" value="IDoc or OData"><span><b class="ltr">C</b> IDoc or OData</span></label><label class="pill"><input type="radio" name="q1" value="Not sure — I’ll ask the SAP team"><span><b class="ltr">D</b> Not sure — I’ll ask the SAP team</span></label></div>
+<div class="s105">For your tech team: <span class="mono s106">SAP interface contract — WSDL/XSD, BAPI/RFC name, IDoc type or OData service; one or many product lines?</span></div>
+</fieldset>
+<fieldset class="s98">
+<legend class="s99">Question 2 of 5</legend>
+<div class="s100">
+<div class="s101">2</div>
+<div class="s21"><div class="s102">How can we be sure SAP really saved the order?</div><div class="s103"><strong class="s17">Why we ask:</strong> SAP can reply “OK” and still not save it. Checking stops lost or doubled orders.</div></div>
+</div>
+<div class="s104"><label class="pill"><input type="radio" name="q2" value="We can look the order up in SAP"><span><b class="ltr">A</b> We can look the order up in SAP</span></label><label class="pill"><input type="radio" name="q2" value="SAP can store our Dataverse order ID"><span><b class="ltr">B</b> SAP can store our Dataverse order ID</span></label><label class="pill"><input type="radio" name="q2" value="Both"><span><b class="ltr">C</b> Both</span></label><label class="pill"><input type="radio" name="q2" value="Not sure"><span><b class="ltr">D</b> Not sure</span></label></div>
+<div class="s105">For your tech team: <span class="mono s106">Commit + read-back; can SAP store the Dataverse ID as an external reference (idempotency)?</span></div>
+</fieldset>
+<fieldset class="s98">
+<legend class="s99">Question 3 of 5</legend>
+<div class="s100">
+<div class="s101">3</div>
+<div class="s21"><div class="s102">Where are the languages kept in Dataverse?</div><div class="s103"><strong class="s17">Why we ask:</strong> To match languages correctly (SAP calls German “D”, Dataverse calls it 1031).</div></div>
+</div>
+<div class="s104"><label class="pill"><input type="radio" name="q3" value="Dataverse’s built-in languages"><span><b class="ltr">A</b> Dataverse’s built-in languages</span></label><label class="pill"><input type="radio" name="q3" value="Our own language table"><span><b class="ltr">B</b> Our own language table</span></label><label class="pill"><input type="radio" name="q3" value="Not sure"><span><b class="ltr">C</b> Not sure</span></label></div>
+<div class="s105">For your tech team: <span class="mono s106">Provisioned LCIDs or custom language table; SPRAS/LAISO ↔ Dataverse mapping; table + key column names</span></div>
+</fieldset>
+<fieldset class="s98">
+<legend class="s99">Question 4 of 5</legend>
+<div class="s100">
+<div class="s101">4</div>
+<div class="s21"><div class="s102">Should the user wait for SAP, or just see a status?</div><div class="s103"><strong class="s17">Why we ask:</strong> SAP can be slow. Showing a status (Processing → Synced) avoids timeouts.</div></div>
+</div>
+<div class="s104"><label class="pill"><input type="radio" name="q4" value="Show a status (recommended)"><span><b class="ltr">A</b> Show a status (recommended)</span></label><label class="pill"><input type="radio" name="q4" value="Wait for the result"><span><b class="ltr">B</b> Wait for the result</span></label><label class="pill"><input type="radio" name="q4" value="Not sure"><span><b class="ltr">C</b> Not sure</span></label></div>
+<div class="s105">For your tech team: <span class="mono s106">Sync vs async; trigger: Power Automate, plugin/webhook or Dataverse connector; required fields</span></div>
+</fieldset>
+<fieldset class="s98">
+<legend class="s99">Question 5 of 5</legend>
+<div class="s100">
+<div class="s101">5</div>
+<div class="s21"><div class="s102">Where does your SAP system run?</div><div class="s103"><strong class="s17">Why we ask:</strong> This decides how Azure can reach SAP safely, and affects cost.</div></div>
+</div>
+<div class="s104"><label class="pill"><input type="radio" name="q5" value="In our own data centre"><span><b class="ltr">A</b> In our own data centre</span></label><label class="pill"><input type="radio" name="q5" value="In a private cloud network"><span><b class="ltr">B</b> In a private cloud network</span></label><label class="pill"><input type="radio" name="q5" value="Not sure"><span><b class="ltr">C</b> Not sure</span></label></div>
+<div class="s105">For your tech team: <span class="mono s106">On-premises data gateway or VNet; Logic Apps Consumption vs Standard; identity for Dataverse</span></div>
+</fieldset>
+<div class="s107">
+<label class="s108" for="extra">Anything else we should know? <span class="s109">(optional)</span></label>
+<textarea class="s110" id="extra" rows="3" placeholder="e.g. orders can have several products, or our SAP team’s contact is …"></textarea>
+</div>
+</section>
+<section class="s111">
+<div class="s112">
+<div class="s113">I HAVE THE DETAILS</div>
+<div class="s114">Send your answer codes and get the real plan</div>
+<div class="s115">You’ll get the workflow, test cases and a step-by-step setup guide based on your answers.</div>
+<div class="s148">Reply in chat: <span class="mono">1B 2C 3A 4A 5C</span></div>
+</div>
+<div class="s117">
+<div class="s118">I DON’T HAVE THEM YET</div>
+<div class="s114">Make a practice version with sample data</div>
+<div class="s119">Same pack, but anything we don’t know is clearly marked <span class="s120">TODO</span>. Safe to explore — not ready for real use.</div>
+<div class="s149">Reply in chat: <span class="mono">make a practice version</span></div>
+</div>
+</section>
+<details class="s122">
+<summary class="s123"><span class="s26">Technical details for engineers</span><span class="s47">Requirements, architecture steps, trade-offs and alternatives. You can skip this.</span></summary>
+<div class="s124">
+<div class="s89">
+<div class="s5">Requirements we captured</div>
+<div class="s125">
+<table class="s126">
+<thead><tr class="s127"><th class="s128">ID</th><th class="s128">Requirement</th><th class="s128">Still unknown</th></tr></thead>
+<tbody>
+<tr class="s129"><td class="s130">REQ-001</td><td class="s128">Dataverse calls the Logic App when a consignment order is created</td><td class="s131">Trigger mechanism</td></tr>
+<tr class="s129"><td class="s130">REQ-002</td><td class="s128">Validate payload before SAP</td><td class="s131">Required field list</td></tr>
+<tr class="s129"><td class="s130">REQ-003</td><td class="s128">Map JSON → SAP XML</td><td class="s131">WSDL / XSD / IDoc</td></tr>
+<tr class="s129"><td class="s130">REQ-004</td><td class="s128">Create consignment in SAP</td><td class="s131">Interface, commit, idempotency</td></tr>
+<tr class="s129"><td class="s130">REQ-005</td><td class="s128">Read product translations from SAP</td><td class="s131">Read operation, line count</td></tr>
+<tr class="s129"><td class="s130">REQ-006</td><td class="s128">Create translations only for SAP ∩ Dataverse languages</td><td class="s131">SPRAS/LAISO ↔ LCID mapping</td></tr>
+<tr class="s129"><td class="s130">REQ-007</td><td class="s128">Mark order Synced with SAP</td><td class="s131">Status field, partial-failure meaning</td></tr>
+<tr class="s129"><td class="s130">REQ-008</td><td class="s128">Low volume, one order at a time</td><td class="s132">Assumed</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="s89">
+<div class="s5">Workflow steps (one stateful Logic App)</div>
+<ol class="s133">
+<li>Trigger from Dataverse (status gate: only when <span class="s134">Submitted</span>)</li>
+<li>Validate required fields → on fail, write reason + <span class="s134">Failed</span></li>
+<li>Idempotency check (existing SAP number / pending state)</li>
+<li>Map JSON → XML against the real SAP schema</li>
+<li>SAP create → check RETURN/warnings → commit → read back; uncertain → <span class="s134">NeedsVerification</span></li>
+<li>Get product translations from SAP</li>
+<li>Get active Dataverse languages → intersect via one confirmed mapping</li>
+<li>Upsert translations (key = consignment + language); log omitted</li>
+<li>Write SAP number + <span class="s134">Synced</span> only if 5 and 8 fully succeeded</li>
+</ol>
+</div>
+<div class="s135">
+<div class="s136"><strong>Sync vs async:</strong> waiting for SAP risks timeouts; a status field is safer.</div>
+<div class="s136"><strong>SAP ok, Dataverse fails:</strong> store the SAP number first; retries resume at step 6.</div>
+<div class="s136"><strong>Connectivity:</strong> on-prem SAP needs a gateway (Consumption) or VNet (Standard).</div>
+<div class="s136"><strong>Alternative:</strong> add an Azure Function for mapping if rules get complex. Service Bus: not needed yet.</div>
+</div>
+</div>
+</details>
+</div>
+<aside class="s137">
+<div class="s138">
+<div class="s26">Where things stand</div>
+<div class="s139">
+<div class="s140"><span>Idea understood</span><span class="s141">Done</span></div>
+<div class="s140"><span>Your answers</span><span class="s142">0 of 5</span></div>
+<div class="s140"><span>Automatically checked</span><span class="s143">Not yet</span></div>
+<div class="s140"><span>Reviewed by a person</span><span class="s143">Not yet</span></div>
+<div class="s140"><span>Deployed to Azure</span><span class="s143">Never — you do this</span></div>
+</div>
+<div class="s144">FlowPilot only designs. It never connects to your real systems or deploys anything.</div>
+</div>
+<div class="s138">
+<div class="s26">Words you’ll see</div>
+<div class="s145">
+<div><div class="s5">Dataverse</div><div class="s119">Where your work orders and consignment orders live (Microsoft Power Platform).</div></div>
+<div><div class="s5">SAP</div><div class="s119">Your business system that holds the official consignment and product data.</div></div>
+<div><div class="s5">Logic App</div><div class="s119">An automated workflow in Azure that runs the steps for you.</div></div>
+<div><div class="s5">Translation</div><div class="s119">The product’s name and description in another language.</div></div>
+<div><div class="s5">Synced</div><div class="s119">SAP and Dataverse agree — the order is fully done.</div></div>
+<div><div class="s5">Needs checking</div><div class="s119">Something was unclear, so a person should look before retrying.</div></div>
+</div>
+</div>
+<div class="s146">
+<div class="s5">Stuck on a question?</div>
+<div class="s147">Forward this page to your SAP or Dataverse admin — the “For your tech team” lines tell them exactly what we need.</div>
+</div>
+</aside>
+</div>
+</div>
+</div>
+</body>
+</html>

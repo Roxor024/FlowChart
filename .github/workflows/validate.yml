@@ -1,0 +1,32 @@
+name: FlowPilot v0.4.1 verification
+on:
+  push:
+    branches:
+      - 'fix/flowpilot-v0.4.1'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Run regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Validate reference blueprint
+        run: python tools/validate_blueprint.py examples/order-processing/integration-blueprint.json
+      - name: Render report
+        run: python tools/render_report.py examples/order-processing/integration-blueprint.json output/order-processing-report.html
+      - name: Package Claude skill
+        run: python tools/package_skill.py dist/flowpilot-architect-v0.4.1.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FlowPilot-v0.4.1-verification
+          path: |
+            dist/flowpilot-architect-v0.4.1.zip
+            output/order-processing-report.html
