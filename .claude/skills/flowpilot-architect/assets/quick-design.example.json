@@ -1,0 +1,106 @@
+{
+  "title": "Send new consignment orders from Dataverse to SAP automatically",
+  "summary": "When someone creates a consignment order, it is created in SAP for them, the product's translations are copied back, and the order is marked Synced.",
+  "requirements": [
+    {"text": "Start when someone creates a consignment order from a work order in Dataverse", "status": "clear"},
+    {"text": "Check that all needed information is there before calling SAP", "status": "needs_detail", "note": "Which fields are required?"},
+    {"text": "Convert the order into SAP's format", "status": "needs_detail", "note": "SAP's exact format is unknown"},
+    {"text": "Create the consignment in SAP", "status": "clear"},
+    {"text": "Find which languages the product has in SAP", "status": "clear"},
+    {"text": "Copy translations only for languages Dataverse also has; skip the rest", "status": "clear"},
+    {"text": "Mark the order \"Synced with SAP\"", "status": "clear"},
+    {"text": "A few orders a day, one at a time", "status": "our_guess", "note": "Tell us if this is wrong"}
+  ],
+  "outcomes": [
+    "An order with missing information never reaches SAP. You see the reason on the order.",
+    "\"Synced\" appears only when SAP has confirmed the order and every translation was saved.",
+    "Only languages in both systems get a translation. Skipped languages are listed with a reason.",
+    "Running it twice never creates a second SAP order or duplicate translations."
+  ],
+  "example": "SAP has English, German, French and Polish. Dataverse has English, German, French and Dutch. Result: 3 translations created, Polish skipped, order marked Synced.",
+  "steps": [
+    {"title": "You create a consignment order", "text": "From a work order in Dataverse, as you do today."},
+    {"title": "We check nothing is missing", "text": "If something is missing, you see a clear message on the order."},
+    {"title": "We create it in SAP and double-check", "text": "We confirm SAP really saved it before moving on."},
+    {"title": "We copy the product's translations", "text": "Only for languages both systems use."},
+    {"title": "The order is marked \"Synced\"", "text": "Only when every step above worked."}
+  ],
+  "suggestion": "Keep it simple. One Azure Logic App runs all five steps. We'll only add more pieces if your answers show we need them.",
+  "architecture": {
+    "areas": [
+      {"name": "Power Platform", "main": {"name": "Dataverse", "text": "Consignment order and its product translations"}},
+      {"name": "Azure", "main": {"name": "Logic App", "text": "One automated workflow: check, create in SAP, copy translations, mark Synced"},
+       "support": [{"name": "Key Vault", "text": "Keeps the SAP password safe"}, {"name": "Monitoring", "text": "Run history and alerts"}]},
+      {"name": "Your company network", "main": {"name": "SAP", "text": "Creates the consignment and holds product texts"},
+       "support": [{"name": "Secure connection", "text": "Data gateway or private network (question 5)"}]}
+    ],
+    "flow": [
+      {"from": 0, "to": 1, "text": "Dataverse sends the new order to the workflow."},
+      {"from": 1, "to": 2, "text": "The workflow creates the consignment in SAP."},
+      {"from": 2, "to": 1, "text": "SAP confirms it and returns the product's translations."},
+      {"from": 1, "to": 0, "text": "Matching translations are saved and the order is marked Synced."}
+    ],
+    "note": "All SAP traffic goes through the secure connection."
+  },
+  "key_rule": {
+    "title": "The language rule",
+    "items": [
+      {"label": "SAP has", "text": "English, German, French, Polish (example)"},
+      {"label": "Dataverse has", "text": "English, German, French, Dutch (example)"},
+      {"label": "Created", "text": "English, German, French"},
+      {"label": "Skipped", "text": "Polish (Dataverse doesn't use it)"},
+      {"label": "Ignored", "text": "Dutch (SAP has no Dutch text for this product)"}
+    ],
+    "note": "If a language could match two options (for example English to US or UK), we don't guess; a person checks it. If no languages match at all, the order shows Needs checking instead of Synced."
+  },
+  "protections": [
+    {"title": "No duplicate orders", "text": "If the flow runs twice, SAP still gets only one order."},
+    {"title": "No false \"success\"", "text": "SAP can say OK with warnings and still not save. We read the order back to be sure."},
+    {"title": "No endless loops", "text": "When we mark the order Synced, that change won't start the flow again."},
+    {"title": "Problems are visible", "text": "If anything is unsure, the order says Needs checking instead of failing silently."}
+  ],
+  "questions": [
+    {"title": "How does SAP accept a new consignment order?", "why": "We have to send orders in exactly the format SAP expects, or SAP rejects them.",
+     "choices": ["Web service (SOAP)", "BAPI / RFC function", "IDoc or OData", "Not sure, I'll ask the SAP team"],
+     "tech": "WSDL/XSD, BAPI/RFC name, IDoc type or OData service for create and for reading product texts; one or several product lines?"},
+    {"title": "How can we be sure SAP really saved the order?", "why": "SAP can reply OK and still not save it. Checking stops lost or doubled orders.",
+     "choices": ["We can look the order up in SAP", "SAP can store our Dataverse order ID", "Both", "Not sure"],
+     "tech": "Commit behaviour and read-back operation; can SAP store the Dataverse ID as an external reference?"},
+    {"title": "Where are the languages kept in Dataverse?", "why": "To match languages correctly. For example, SAP calls German D and Dataverse calls it 1031.",
+     "choices": ["Dataverse's built-in languages", "Our own language table", "Not sure"],
+     "tech": "Provisioned LCIDs or custom table; SPRAS/LAISO to Dataverse mapping; table and key column names"},
+    {"title": "Should the user wait for SAP, or just see a status?", "why": "SAP can be slow. Showing a status (Processing, then Synced) avoids timeouts.",
+     "choices": ["Show a status (recommended)", "Wait for the result", "Not sure"],
+     "tech": "Trigger type (Power Automate, plugin/webhook or Dataverse connector) and required fields"},
+    {"title": "Where does your SAP system run?", "why": "This decides how Azure can reach SAP safely, and it affects cost.",
+     "choices": ["In our own data centre", "In a private cloud network", "Not sure"],
+     "tech": "On-premises data gateway or VNet; Logic Apps Consumption or Standard; identity for Dataverse"}
+  ],
+  "technical": {
+    "requirements": [
+      {"id": "REQ-001", "text": "Dataverse calls the Logic App when a consignment order is created", "unknown": "Trigger mechanism"},
+      {"id": "REQ-003", "text": "Map JSON to SAP XML", "unknown": "WSDL / XSD / IDoc"},
+      {"id": "REQ-004", "text": "Create consignment in SAP", "unknown": "Interface, commit, idempotency"},
+      {"id": "REQ-006", "text": "Translations only for SAP and active Dataverse languages", "unknown": "SPRAS/LAISO to LCID mapping"}
+    ],
+    "steps": [
+      "Trigger with a status gate (only when Submitted) to prevent loops.",
+      "Validate required fields; on failure write the reason and set Failed.",
+      "Idempotency check: existing SAP number or pending state?",
+      "SAP create: check RETURN and warnings, commit, read back; uncertain means NeedsVerification.",
+      "Intersect languages through one confirmed mapping; quarantine ambiguous matches.",
+      "Upsert translations keyed by consignment + language; set Synced only if SAP and all translations succeeded."
+    ],
+    "notes": [
+      "Alternative: add an Azure Function for mapping if the rules get complex.",
+      "Not recommended yet: Service Bus, unless long SAP outages or large peaks must be absorbed."
+    ]
+  },
+  "glossary": [
+    {"term": "Dataverse", "meaning": "Where your work orders and consignment orders live."},
+    {"term": "SAP", "meaning": "Your business system with the official consignment and product data."},
+    {"term": "Logic App", "meaning": "An automated workflow in Azure."},
+    {"term": "Synced", "meaning": "SAP and Dataverse agree, and the order is done."},
+    {"term": "Needs checking", "meaning": "Something was unclear, so a person should look."}
+  ]
+}

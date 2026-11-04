@@ -1,13 +1,26 @@
 """Beginner-friendly Quick Design: template, worked example and HTML page stay consistent."""
+import copy
+import json
 import re
+import subprocess
+import sys
+import tempfile
 import unittest
 from html.parser import HTMLParser
+from pathlib import Path
 
-from _helpers import ROOT, SKILL
+from _helpers import ROOT, SKILL, load
 
 TEMPLATE = SKILL / "references" / "quick-design-template.md"
 EXAMPLE_MD = ROOT / "examples" / "quick-design-dataverse-sap.md"
-PAGE = SKILL / "assets" / "quick-design-page.html"
+RENDERER = SKILL / "scripts" / "render_quick_design.py"
+EXAMPLE_JSON = SKILL / "assets" / "quick-design.example.json"
+SFTP_JSON = ROOT / "examples" / "quick-design-sftp.json"
+rqd = load("render_quick_design")
+
+
+def read_json(path):
+    return json.loads(path.read_text(encoding="utf-8"))
 
 # Section headings in the order a Quick Design reply must use them.
 ORDER = [
@@ -127,9 +140,13 @@ class _Collector(HTMLParser):
 
 
 class QuickDesignPage(unittest.TestCase):
-    html = PAGE.read_text(encoding="utf-8")
+    """Checks the page rendered from the packaged example; QuickDesignPageSftp reruns them on a second scenario."""
+    source = EXAMPLE_JSON
 
     def setUp(self):
+        doc = read_json(self.source)
+        self.assertEqual(rqd.check(doc), [], self.source.name)
+        self.html = rqd.render(doc)
         self.c = _Collector()
         self.c.feed(self.html)
 
@@ -164,8 +181,21 @@ class QuickDesignPage(unittest.TestCase):
         self.assertFalse(any(tag in ("button", "form") for tag, _ in self.c.tags), "no buttons that do nothing")
         self.assertIn("this page can’t send anything", self.html)
         self.assertIn("make a practice version", self.html)
+        for line in ("Validation: not executed", "Deployment: not performed", "Human review: pending", "Not yet"):
+            self.assertIn(line, self.html)
+        for claim in ("validation: passed", "validated successfully", "production-ready", "production ready"):
+            self.assertNotIn(claim, self.html.lower())
         self.assertEqual(self.html.count("Why we ask:"), len(self.c.radios))
         self.assertEqual(self.html.count("For your tech team:"), len(self.c.radios))
+
+    def test_answer_code_on_page_is_valid(self):
+        doc = read_json(self.source)
+        for code in rqd.answer_code(doc["questions"]).split():
+            q = doc["questions"][int(code[0]) - 1]
+            with self.subTest(code=code):
+                letter = "ABCD".index(code[1])
+                self.assertLess(letter, len(q["choices"]))
+                self.assertFalse(q["choices"][letter].startswith("Not sure"), "example code should not pick Not sure")
 
     def test_accessible_basics(self):
         self.assertIn('<html lang="en">', self.html)
@@ -174,6 +204,67 @@ class QuickDesignPage(unittest.TestCase):
                 self.assertEqual(a.get("aria-hidden"), "true", "decorative svg must be aria-hidden")
             if tag == "textarea":
                 self.assertIn(f'for="{a.get("id")}"', self.html, "textarea needs a label")
+
+
+class QuickDesignPageSftp(QuickDesignPage):
+    source = SFTP_JSON
+
+
+class RendererRules(unittest.TestCase):
+    def broken(self, change):
+        doc = copy.deepcopy(read_json(EXAMPLE_JSON))
+        change(doc)
+        return rqd.check(doc)
+
+    def test_rejects_rule_breaks(self):
+        cases = {
+            "six questions": lambda d: d["questions"].append(copy.deepcopy(d["questions"][0])),
+            "no Not sure": lambda d: d["questions"][0]["choices"].__setitem__(-1, "Maybe"),
+            "five choices": lambda d: d["questions"][0]["choices"].insert(0, "Extra"),
+            "skipping an area": lambda d: d["architecture"]["flow"].append({"from": 0, "to": 2, "text": "jump"}),
+            "unknown status": lambda d: d["requirements"][0].__setitem__("status", "done"),
+            "claims validation": lambda d: d.__setitem__("summary", "Validated successfully and ready."),
+            "missing questions": lambda d: d.pop("questions"),
+            "too many glossary terms": lambda d: d["glossary"].extend(d["glossary"] * 2),
+        }
+        for name, change in cases.items():
+            with self.subTest(case=name):
+                self.assertNotEqual(self.broken(change), [], f"{name} should be rejected")
+
+    def test_escapes_user_text(self):
+        doc = copy.deepcopy(read_json(EXAMPLE_JSON))
+        doc["title"] = "<script>alert(1)</script> & co"
+        page = rqd.render(doc)
+        self.assertNotIn("<script>alert", page)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt; &amp; co", page)
+
+    def test_cli_exit_codes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "page.html"
+            ok = subprocess.run([sys.executable, "-I", str(RENDERER), str(EXAMPLE_JSON), str(out)],
+                                capture_output=True, text=True)
+            self.assertEqual(ok.returncode, 0, ok.stderr)
+            self.assertTrue(out.is_file())
+            bad_doc = read_json(EXAMPLE_JSON)
+            bad_doc["questions"][0]["choices"][-1] = "Maybe"
+            bad = Path(tmp) / "bad.json"
+            bad.write_text(json.dumps(bad_doc), encoding="utf-8")
+            out2 = Path(tmp) / "bad.html"
+            res = subprocess.run([sys.executable, "-I", str(RENDERER), str(bad), str(out2)], capture_output=True, text=True)
+            self.assertEqual(res.returncode, 1)
+            self.assertIn("Not sure", res.stderr)
+            self.assertFalse(out2.exists(), "no page may be written for invalid content")
+            res = subprocess.run([sys.executable, "-I", str(RENDERER), str(Path(tmp) / "missing.json"), str(out2)],
+                                 capture_output=True, text=True)
+            self.assertEqual(res.returncode, 2)
+
+    def test_skill_points_to_renderer(self):
+        skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        for value in ("scripts/render_quick_design.py", "assets/quick-design.example.json", "60 seconds",
+                      "Never edit the HTML by hand", "reply in markdown using the template"):
+            with self.subTest(value=value):
+                self.assertIn(value, skill)
+        self.assertFalse((SKILL / "assets" / "quick-design-page.html").exists(), "hand-written page was replaced")
 
 
 if __name__ == "__main__":

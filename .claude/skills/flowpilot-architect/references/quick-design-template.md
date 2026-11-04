@@ -9,6 +9,29 @@ The reader is new to integration work. They must understand, within one scroll:
 
 Technical detail is welcome, but it goes last.
 
+## How to deliver it
+
+- **Preferred: a rendered page.**
+  1. Write the content as `quick-design.json`, in the same shape as `assets/quick-design.example.json`.
+  2. Run `scripts/render_quick_design.py quick-design.json quick-design.html` and deliver the page.
+  3. In chat, give a 3–5 line summary and then the questions.
+  The renderer owns the layout and refuses content that breaks the rules below, so never write the HTML yourself.
+- **Fallback (no Python or files): markdown** using the template further down.
+
+`quick-design.json` fields:
+- **`title`, `summary`**: one plain line each.
+- **`requirements`**: 1–12 of `{text, status, note?}`. `status` is `clear`, `needs_detail` or `our_guess`.
+- **`outcomes`**: 2–5 checks. **`example`**: one worked example with sample values.
+- **`steps`**: 2–5 of `{title, text}`. The last step is the success state. **`suggestion`**: one sentence.
+- **`architecture`**:
+  - `areas`: 2–3, each `{name, main: {name, text}, support?: [≤2 boxes]}`.
+  - `flow`: 1–6 of `{from, to, text}` between neighbouring areas (index 0, 1, 2).
+  - `note`: optional.
+- **`key_rule`**: `{title, items: [{label, text}], note?}`. **`protections`**: up to 4 of `{title, text}`.
+- **`questions`**: 1–5 of `{title, why, choices, tech}`. `choices` has 2–4 entries, and the last starts with "Not sure".
+- **`technical`**: optional `{requirements: [{id, text, unknown}], steps: [...], notes: [...]}`.
+- **`glossary`**: up to 6 of `{term, meaning}`.
+
 ## Writing rules
 
 - Use plain words first. Put a technical term only:
@@ -72,7 +95,7 @@ Technical detail is welcome, but it goes last.
 
 ## Architecture: which systems talk to each other
 
-*If the client renders diagrams or HTML, draw this as a picture (see `assets/quick-design-page.html`). Otherwise use the boxed sketch below and keep its label.*
+*In the rendered page this is drawn from `architecture` in `quick-design.json`. In a markdown reply, use the boxed sketch below and keep its label.*
 
 Sketch (proposed, not a rendered diagram):
 

@@ -1,0 +1,86 @@
+{
+  "title": "Receive supplier order files over SFTP and acknowledge them",
+  "summary": "When a supplier uploads an order CSV file, the integration waits until the upload is complete, checks the contents, avoids processing it twice, stores it and tells the supplier the result.",
+  "requirements": [
+    {"text": "Receive CSV order files through SFTP", "status": "clear"},
+    {"text": "Only process a file after its upload has finished", "status": "clear", "note": "How suppliers mark 'finished' needs detail"},
+    {"text": "Check columns, required fields and values", "status": "needs_detail", "note": "File layout and business rules"},
+    {"text": "Never process the same file twice", "status": "clear", "note": "What counts as 'the same' needs detail"},
+    {"text": "Store accepted files and set aside invalid ones", "status": "clear", "note": "Where to store needs detail"},
+    {"text": "Send the supplier an acknowledgement", "status": "clear", "note": "Format and timing need detail"},
+    {"text": "Use Azure to run the integration", "status": "our_guess", "note": "Please confirm"}
+  ],
+  "outcomes": [
+    "A half-uploaded file is never processed.",
+    "Uploading the same file again does not create a second order.",
+    "Invalid files are set aside with a clear reason.",
+    "The acknowledgement only says what really happened at the agreed point."
+  ],
+  "example": "orders-042.csv is uploaded, then orders-042.ready appears. The file passes the checks and is stored as accepted. Uploading it again is recorded as a duplicate. A broken file is set aside and the supplier gets a rejection.",
+  "steps": [
+    {"title": "Supplier uploads a file", "text": "Plus a 'ready' marker, or a rename when the upload is done."},
+    {"title": "We wait until it's complete", "text": "And check we haven't seen this file before."},
+    {"title": "We check the contents", "text": "Columns, required fields and values, against the agreed layout."},
+    {"title": "We store the result", "text": "Accepted files in one place, invalid files set aside with the reason."},
+    {"title": "The supplier gets an answer", "text": "Only after the outcome is safely recorded."}
+  ],
+  "suggestion": "Start with one Logic App, file storage and a small 'already processed' record. Add more pieces only if volumes or outages require them.",
+  "architecture": {
+    "areas": [
+      {"name": "Supplier", "main": {"name": "SFTP server", "text": "Order CSV files and 'ready' markers"}},
+      {"name": "Azure", "main": {"name": "Logic App", "text": "Waits for complete files, checks them, avoids duplicates"},
+       "support": [{"name": "File storage", "text": "Accepted and set-aside files"}, {"name": "Processed record", "text": "Remembers which files were handled"}]}
+    ],
+    "flow": [
+      {"from": 0, "to": 1, "text": "The workflow picks up a complete file from SFTP."},
+      {"from": 1, "to": 0, "text": "The supplier gets an acceptance or a rejection with the reason."}
+    ],
+    "note": "Whether the SFTP server is the supplier's, ours, or Azure's own SFTP decides the connection (question 1)."
+  },
+  "key_rule": {
+    "title": "The key rule: never process an incomplete or repeated file",
+    "items": [
+      {"label": "Incomplete", "text": "orders-043.csv without its .ready marker: wait, don't process."},
+      {"label": "Valid", "text": "Marker present, checks pass, file not seen before: process once."},
+      {"label": "Duplicate", "text": "Same supplier and same file identity: record it, don't create another order."},
+      {"label": "Invalid", "text": "Wrong layout or missing data: set aside and report why."}
+    ]
+  },
+  "protections": [
+    {"title": "No half-written files", "text": "We only read a file once its upload is confirmed complete."},
+    {"title": "No duplicate orders", "text": "A processed-file record stops the same file being handled twice."},
+    {"title": "No false 'success'", "text": "The acknowledgement only means what we agreed, nothing more."},
+    {"title": "No lost files", "text": "Failed and set-aside files can be found and reprocessed."}
+  ],
+  "questions": [
+    {"title": "Where is the SFTP server?", "why": "It decides how Azure connects and how it's secured.",
+     "choices": ["The supplier's server", "Azure Blob Storage SFTP", "Our own server", "Not sure"],
+     "tech": "Host type, authentication method, inbound or outbound connection, VNet/gateway needs"},
+    {"title": "How do suppliers show an upload is finished?", "why": "Reading a half-uploaded file can corrupt an order.",
+     "choices": ["A .ready marker file", "Rename after upload", "File size stops changing", "Not sure"],
+     "tech": "Finalisation contract, file naming pattern, atomic rename support"},
+    {"title": "Where should valid orders go?", "why": "Storing a file is different from creating orders in a business system.",
+     "choices": ["Archive the file only", "Dataverse", "ERP or order API", "Not sure"],
+     "tech": "Target interface, schema, persistence and transaction boundary"},
+    {"title": "What counts as the same file?", "why": "Two files with the same name can hold different orders.",
+     "choices": ["Supplier + file name", "File contents (hash)", "Supplier + order number", "Not sure"],
+     "tech": "Idempotency key, replay window, conflict handling"},
+    {"title": "When should the supplier get an acknowledgement?", "why": "Receiving a file is not the same as processing it successfully.",
+     "choices": ["As soon as it's safely received", "After checks and storage", "After the order is created", "Not sure"],
+     "tech": "ACK/NACK format, timing, retry contract"}
+  ],
+  "technical": {
+    "notes": [
+      "A durable processed-file record and audit trail stop replays from creating the same order twice.",
+      "Failures before the acknowledgement point must never report success.",
+      "Use scoped credentials and Key Vault; keep file contents out of logs and acknowledgements.",
+      "Unknowns: SFTP location, completion convention, file layout, target system, duplicate key, acknowledgement meaning, volumes."
+    ]
+  },
+  "glossary": [
+    {"term": "SFTP", "meaning": "A secure way to upload and download files."},
+    {"term": "Logic App", "meaning": "An automated workflow in Azure."},
+    {"term": "Acknowledgement", "meaning": "The message telling the supplier whether their file was accepted."},
+    {"term": "Duplicate", "meaning": "A file we have already processed."}
+  ]
+}
