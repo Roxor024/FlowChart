@@ -1,6 +1,19 @@
 # Changelog
 
-## Unreleased: beginner-friendly Quick Design
+## Unreleased: Quick Design page renderer
+- New `scripts/render_quick_design.py` (standard library only):
+  - Turns a small `quick-design.json` into the beginner-friendly Quick Design page, in about 0.05 s.
+  - Every page gets the same layout: status, requirements, outcomes, steps, a three-area architecture diagram, key rule, protections, lettered questions, next steps, "Where things stand" and a glossary.
+  - It refuses content that breaks the rules (more than 5 questions, a missing "Not sure", arrows between non-neighbouring areas, claims of validation or production readiness) and writes nothing.
+- New `assets/quick-design.example.json` (Dataverse → SAP) and `examples/quick-design-sftp.json` (supplier SFTP files).
+- `SKILL.md` Quick Design steps:
+  - Read only SKILL.md, the template and the example JSON.
+  - Write the JSON, render it, deliver the page with a 3–5 line chat summary and the questions.
+  - Fall back to markdown when Python or files are unavailable.
+  - Target: 60 seconds or less.
+- Removed the hand-written `assets/quick-design-page.html`; the renderer replaces it.
+
+## 2026-11-04: beginner-friendly Quick Design
 The default Quick Design reply is now written for readers who are new to integration work.
 - New `references/quick-design-template.md` sets the section order:
   1. Plain status line.
@@ -14,7 +27,7 @@ The default Quick Design reply is now written for readers who are new to integra
   9. Optional technical details.
   10. "Where things stand".
   11. Glossary.
-- New `assets/quick-design-page.html`: a self-contained HTML version (no external scripts, fonts or images), filled with the Dataverse → SAP worked example.
+- New `assets/quick-design-page.html` (later replaced by `scripts/render_quick_design.py`): a self-contained HTML version filled with the Dataverse → SAP worked example.
 - New `examples/quick-design-dataverse-sap.md`: the same worked example as a markdown reply.
 - `SKILL.md`, `references/outputs.md` and `references/workflow.md` point Quick Design at the template.
 - "make a practice version" is accepted as the same request as "generate a synthetic starter".
