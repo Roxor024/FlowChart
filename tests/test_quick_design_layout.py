@@ -37,6 +37,9 @@ class QuickDesignTemplate(unittest.TestCase):
         skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("references/quick-design-template.md", skill)
         self.assertIn("make a practice version", skill)
+        for value in ("multiple-choice question tool", "AskUserQuestion", "Reply like: 1A 2D 3B 4A 5C"):
+            with self.subTest(value=value):
+                self.assertIn(value, skill)
         for ref in ("references/outputs.md", "references/workflow.md"):
             self.assertIn("quick-design-template.md", (SKILL / ref).read_text(encoding="utf-8"), ref)
 
@@ -66,8 +69,21 @@ class QuickDesignExample(unittest.TestCase):
         for i, block in enumerate(blocks, 1):
             with self.subTest(question=i):
                 self.assertIn("Why we ask:", block)
-                self.assertIn("Not sure", block)
                 self.assertIn("For your tech team:", block)
+                choices = re.findall(r"\*\*([A-D])\*\* ([^·\n]+)", block)
+                self.assertTrue(2 <= len(choices) <= 4, choices)
+                self.assertEqual([c[0] for c in choices], list("ABCD")[:len(choices)], "letters must run A, B, C...")
+                self.assertTrue(choices[-1][1].startswith("Not sure"), "Not sure must be the last choice")
+
+    def test_answer_code_instruction(self):
+        match = re.search(r"How to answer:.*?`((?:\d[A-D] ?)+)`", self.text)
+        self.assertIsNotNone(match, "missing answer-code example")
+        letters = {i: [c[0] for c in re.findall(r"\*\*([A-D])\*\* ", block)]
+                   for i, block in enumerate(question_blocks(self.text), 1)}
+        for code in match.group(1).split():
+            with self.subTest(code=code):
+                self.assertIn(code[1], letters[int(code[0])], "example code points to a choice that does not exist")
+        self.assertIn("clickable question cards", self.text)
 
     def test_language_rule_outcome(self):
         rule = self.text[self.text.index("## The language rule"):self.text.index("## Mistakes")]
@@ -140,7 +156,14 @@ class QuickDesignPage(unittest.TestCase):
         self.assertTrue(1 <= len(self.c.radios) <= 5)
         for name, values in self.c.radios.items():
             with self.subTest(question=name):
-                self.assertTrue(any(v.startswith("Not sure") for v in values), values)
+                self.assertTrue(2 <= len(values) <= 4, values)
+                self.assertTrue(values[-1].startswith("Not sure"), values)
+
+    def test_page_is_honest_about_sending(self):
+        # A static page cannot send answers back: no fake submit buttons, and it says to reply in chat.
+        self.assertFalse(any(tag in ("button", "form") for tag, _ in self.c.tags), "no buttons that do nothing")
+        self.assertIn("this page can’t send anything", self.html)
+        self.assertIn("make a practice version", self.html)
         self.assertEqual(self.html.count("Why we ask:"), len(self.c.radios))
         self.assertEqual(self.html.count("For your tech team:"), len(self.c.radios))
 
