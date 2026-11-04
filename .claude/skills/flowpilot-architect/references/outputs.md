@@ -1,6 +1,22 @@
 # FlowPilot output contract — Quick Design / Full Build Pack
 
-**Default: Quick Design.** One-page overview with business goal, known requirements and assumptions, at most five blocking questions, concise diagram/sketch (clearly proposed), simplest viable design and alternative, risks, and what the user must decide. Do NOT generate the long ten-section manual or code ZIP by default.
+**Default: Quick Design.** One page written for someone new to integration work. It tells them what will happen and what they need to decide, in plain words, before any technical detail. Fill `references/quick-design-template.md` in this order:
+
+0. **Status line**: "Draft idea · nothing has been built yet", plus the 4-step progress line (Understood ✓ → Your answers → Starter pack → Human review).
+1. **Title and one plain sentence** on what the integration does for the user.
+2. **What you asked for, and what you'll get**: numbered plain-language requirements, each tagged Clear / Needs detail / Our guess (internal REQ IDs only in the technical section), and 3–5 outcome checks rewritten from the acceptance criteria, with one worked example using labelled sample values.
+3. **How it will work**: at most five numbered steps; the last is the success state.
+4. **Architecture**: the systems grouped by trust area (for example Power Platform | Azure | Your company network), main path numbered ①–④, supporting services (Key Vault, monitoring, gateway/private network) shown as secondary, and a numbered legend. Without a rendering client, use the boxed text sketch from the template, labelled as a sketch; a Mermaid block alone is not a rendered diagram.
+5. **Our suggestion**: one sentence naming the simplest viable design. Alternatives belong in the technical section.
+6. **The scenario's key rule as an example** (for instance "SAP has X · Dataverse has Y → created / skipped / ignored"), and that ambiguous matches are flagged for a person, never guessed.
+7. **Mistakes it protects you from**: 3–4 plain promises that the design really delivers.
+8. **Questions (at most five)**: plain title, "Why we ask:" in one sentence, 2–5 answer choices always including "Not sure" (recorded as a gap), and a "For your tech team:" line with the precise technical ask.
+9. **Next step**: two labelled choices, "I have the details" (answer the questions) and "I don't have them yet" (say "make a practice version" for a Full Build Pack with sample data and marked TODOs, not for real use).
+10. **Technical details for engineers** (optional, last): REQ table with what is still unknown, numbered workflow steps, trade-offs, alternative and "not recommended yet".
+11. **Where things stand**: Idea understood · Your answers (0 of N) · Automatically checked · Reviewed by a person · Deployed (never by FlowPilot), followed by the standard Validation / Deployment / Human review lines saying the same thing.
+12. **Words you'll see**: at most six terms used in the reply.
+
+Writing rules: sentences of 25 words or fewer, one idea per bullet, no paragraph over three lines, sample values labelled as examples, no invented system names, field names or limits. Keep the ≤5 questions, provisional-status and no-blueprint rules. Do NOT generate the long ten-section manual or code ZIP by default. A worked example is in `examples/quick-design-dataverse-sap.md` at the repository root (not packaged).
 
 **Full Build Pack: opt-in or explicitly requested.** Apply the sections below only in this mode. A provisional build pack may contain synthetic adapters, but its missing WSDL and Dataverse schema must be prominent.
 

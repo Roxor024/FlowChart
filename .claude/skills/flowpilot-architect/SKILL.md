@@ -12,6 +12,8 @@ Purpose: help anyone turn requirements into visually illustrated, approachable, 
 - `references/azure-patterns.md` — service selection, retry pacing, security. Read before recommending services.
 - `references/outputs.md` — mandatory beginner-friendly Guided Builder structure. Read before writing the report.
 - `references/implementation-playbook.md` — exact task-level instructions and safety checks.
+- `references/quick-design-template.md` — the beginner-friendly Quick Design reply, section by section. Read before every Quick Design reply.
+- `assets/quick-design-page.html` — optional self-contained HTML version of the Quick Design reply (filled worked example). Replace its example content; keep the structure.
 - `references/azure-docs-example.md` — checked Microsoft Learn reference links; choose the precise current article for each task. Read before writing implementation steps.
 - `references/order-processing-scenario.md` — reference scenario and expected behaviour.
 - `assets/integration-blueprint.schema.json` — blueprint schema **0.4.0**. Read before writing the blueprint.
@@ -19,8 +21,8 @@ Purpose: help anyone turn requirements into visually illustrated, approachable, 
 - `scripts/validate_blueprint.py`, `scripts/render_report.py` — offline validator and HTML renderer. The renderer validates first and refuses invalid blueprints; use `--preview` only for a draft clearly marked NOT VALIDATED.
 
 ## Delivery modes and speed gates (mandatory; override full-output defaults below)
-- **Quick Design is the default** for a newly described integration or unclear request. Return a concise requirements recap, a readable architecture sketch, simplest viable pattern with alternative, key trade-offs, at most FIVE prioritized blocking questions, and next action. Do NOT generate a full build pack, dozens of files, or a click-by-click manual in this mode. No requirement to create JSON unless the user explicitly asks for validation/export.
-- **Full Build Pack** only on an explicit user request for code/manual/ZIP, or after the user chooses it once blockers are resolved. Preserve the beginner-friendly code, visuals, Microsoft Learn links and verification contract in this mode. Never force another question round when the user explicitly requests a synthetic starter: produce safe, clearly marked placeholders and list missing contracts.
+- **Quick Design is the default** for a newly described integration or unclear request. It is written for a novice reader: lead with what the integration does and what the user must decide, keep jargon for the technical section. Follow `references/quick-design-template.md` section by section (status line, requirements with Clear / Needs detail / Our guess tags, outcome checks with one worked example, five-step "how it will work", architecture diagram grouped by trust area with a numbered legend, protections, at most FIVE questions each with "Why we ask", answer choices including "Not sure" and a "For your tech team" line, two next-step choices, optional technical details, "Where things stand", short glossary). When the client can show an HTML page or artifact, you may fill `assets/quick-design-page.html` with the same content instead of long markdown. Do NOT generate a full build pack, dozens of files, or a click-by-click manual in this mode. No requirement to create JSON unless the user explicitly asks for validation/export.
+- **Full Build Pack** only on an explicit user request for code/manual/ZIP, or after the user chooses it once blockers are resolved. Preserve the beginner-friendly code, visuals, Microsoft Learn links and verification contract in this mode. Treat "make a practice version" and "generate a synthetic starter" as the same explicit request. Never force another question round when the user makes it: produce safe, clearly marked placeholders and list missing contracts.
 - **Questions-first gate:** SAP WSDL/BAPI contract, transaction and read-back semantics, target system idempotency, Dataverse table/locale model and security/connectivity are blockers when they affect correctness. If unanswered, label design provisional; do not fake mappings or mark production integration ready.
 - **Complexity gate:** default to the fewest Azure services that can meet stated requirements. Compare a single stateful Logic App against extra queues/Functions/storage and explain the concrete outage, scale, retry, isolation, transformation or network requirement that justifies each added component. Do not add Service Bus and a reconciliation job solely because the reference order-processing example uses them.
 - **Output budget:** reuse validated templates, generate only necessary files and diagrams, avoid repetitive text and stop after the agreed mode's deliverables. Record measured elapsed time, generated file count, executed tests and unresolved TODOs when available; never invent timings.
@@ -54,7 +56,7 @@ Purpose: help anyone turn requirements into visually illustrated, approachable, 
 
 The existing scripts/render_report.py outputs a technical engineering overview, NOT the new Guided Builder UI. Never claim the new visual report is generated unless an actual rendered artifact exists. No actual Azure changes are allowed.
 
-End every deliverable with:
+End every deliverable with the three lines below. In Quick Design they follow the plain-language "Where things stand" box and must say the same thing:
 Validation: executed (tool, scope, result) OR not executed (reason)
 Deployment: not performed
 Human review: pending — unless the user supplied reviewer evidence
