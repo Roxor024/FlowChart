@@ -85,16 +85,29 @@ class QuickDesignExample(unittest.TestCase):
         self.assertIn("0 of 5", self.text)
 
 
+VOID = {"meta", "input", "br", "link", "img", "path", "rect", "circle", "hr", "source"}
+
+
 class _Collector(HTMLParser):
     def __init__(self):
         super().__init__()
-        self.tags, self.radios = [], {}
+        self.tags, self.radios, self.stack, self.unbalanced = [], {}, [], []
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
         self.tags.append((tag, a))
+        if tag not in VOID:
+            self.stack.append(tag)
         if tag == "input" and a.get("type") == "radio":
             self.radios.setdefault(a["name"], []).append(a.get("value", ""))
+
+    def handle_endtag(self, tag):
+        if tag in VOID:
+            return
+        if self.stack and self.stack[-1] == tag:
+            self.stack.pop()
+        else:
+            self.unbalanced.append((tag, self.getpos()[0]))
 
 
 class QuickDesignPage(unittest.TestCase):
@@ -113,6 +126,10 @@ class QuickDesignPage(unittest.TestCase):
                     value = a.get(key) or ""
                     self.assertFalse(value.startswith(("http:", "https:", "//")), f"remote {key}: {value}")
         self.assertNotIn("{{", self.html, "unfilled template holes")
+
+    def test_tags_balanced(self):
+        self.assertEqual(self.c.unbalanced, [], "mismatched closing tags")
+        self.assertEqual(self.c.stack, [], "unclosed tags")
 
     def test_sections_and_questions(self):
         for needle in ("nothing has been built yet", "What you asked for, and what you’ll get", "How it will work",
