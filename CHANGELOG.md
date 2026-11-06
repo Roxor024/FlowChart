@@ -1,6 +1,36 @@
 # Changelog
 
-## Unreleased: Quick Design page renderer
+## Unreleased: faster Quick Design and Full Build Pack
+Measured on the order-status scenario before this change: Quick Design 48 s, practice version 8 min.
+- **Plain questions.** Quick Design questions are open questions with "Why we ask" and "For your tech team". There are no answer choices, letters, answer codes or clickable cards. The renderer rejects `choices`.
+- **Technical details always included** in Quick Design (required in `quick-design.json`), shown open on the page.
+- **Shorter SKILL.md** (13.2 KB → 7.2 KB):
+  - The Full Build Pack procedure, workflow rules and testing-honesty rules moved to the new `references/full-build-pack.md`.
+  - Quick Design reads only SKILL.md and the template.
+  - The chat reply is a one- or two-line note plus the questions.
+- **`scripts/render_build_guide.py`:**
+  - Builds `build-guide.html` from the blueprint plus a small `guide-extras.json`, and can reuse `quick-design.json` (`--quick`).
+  - It refuses missing tasks, files that don't exist in the pack, unknown file states, tests named in a task check that aren't in the blueprint, non-https links, and claims of validation or production readiness.
+  - The model no longer writes the guide's HTML.
+- **`scripts/check_pack.py`:**
+  - One command checks JSON, XML, Python, HTML and YAML, runs the local tests, validates the blueprint and scans for secrets.
+  - It writes `evidence/check-pack.txt` with a SHA-256.
+- **`assets/example-blueprint.compact.json`** (6.5 KB, valid, 0 warnings) for the full pack to copy, instead of the 27 KB example.
+- Tests: `tests/test_build_pack_tools.py` and the sample pack in `tests/fixtures/sample-pack/`.
+- **Fixes from the timed order-status run:**
+  - `full-build-pack.md` lists every value the validator accepts (for example, requirement types are only `functional` or `nonfunctional`).
+  - The guide is rendered before the final `check_pack.py` run, so the check also covers `build-guide.html`.
+  - Tip for XML attributes that contain API Management policy expressions: use single quotes.
+  - `azure-docs-example.md` now lists checked Microsoft Learn links for API Management, Table Storage, Key Vault, Event Grid, Blob SFTP and Application Insights. Every build task needs at least one link.
+  - Answering the Quick Design questions now gives an updated Quick Design; "build it" starts the Full Build Pack. The page, template and example say so.
+- **`check_pack.py`** runs the pack's tests under plain `unittest` when pytest isn't installed (as in CI), and treats "no tests found" as a failure. New `--runner` option.
+- **Public release preparation:**
+  - MIT licence (`LICENSE`, plus `LICENSE.txt` inside the skill ZIP).
+  - Public README with install steps for Claude.ai and Claude Code, and a disclaimer.
+  - `docs/SECURITY.md` explains how to report a problem. It no longer claims a CI secret scan that doesn't run.
+  - Removed the early planning notes `docs/PRODUCT-SPEC.md` and `docs/GUIDED-BUILDER-v0.5.md`.
+
+## 2026-11-04: Quick Design page renderer
 - New `scripts/render_quick_design.py` (standard library only):
   - Turns a small `quick-design.json` into the beginner-friendly Quick Design page, in about 0.05 s.
   - Every page gets the same layout: status, requirements, outcomes, steps, a three-area architecture diagram, key rule, protections, lettered questions, next steps, "Where things stand" and a glossary.

@@ -14,7 +14,7 @@ Technical detail is welcome, but it goes last.
 - **Preferred: a rendered page.**
   1. Write the content as `quick-design.json`, in the same shape as `assets/quick-design.example.json`.
   2. Run `scripts/render_quick_design.py quick-design.json quick-design.html` and deliver the page.
-  3. In chat, give a 3–5 line summary and then the questions.
+  3. In chat, say in one or two lines that the page is ready and what the key decision is, then list the open questions.
   The renderer owns the layout and refuses content that breaks the rules below, so never write the HTML yourself.
 - **Fallback (no Python or files): markdown** using the template further down.
 
@@ -28,8 +28,8 @@ Technical detail is welcome, but it goes last.
   - `flow`: 1–6 of `{from, to, text}` between neighbouring areas (index 0, 1, 2).
   - `note`: optional.
 - **`key_rule`**: `{title, items: [{label, text}], note?}`. **`protections`**: up to 4 of `{title, text}`.
-- **`questions`**: 1–5 of `{title, why, choices, tech}`. `choices` has 2–4 entries, and the last starts with "Not sure".
-- **`technical`**: optional `{requirements: [{id, text, unknown}], steps: [...], notes: [...]}`.
+- **`questions`**: 1–5 of `{title, why, tech}`: open questions, no answer choices.
+- **`technical`**: required, for engineers: `{requirements: [{id, text, unknown}], steps: [...], notes: [...]}` (at least one of the three; include the alternative and what is not recommended yet).
 - **`glossary`**: up to 6 of `{term, meaning}`.
 
 ## Writing rules
@@ -40,12 +40,10 @@ Technical detail is welcome, but it goes last.
   - or in the glossary.
 - Keep sentences to 25 words or fewer. Write one idea per bullet. Never write a paragraph longer than three lines.
 - Label sample values as examples. Never invent real system names, table or field names, service limits or prices.
-- Ask at most FIVE questions. Never mark a question as answered unless the user answered it.
-- Give each question 2–4 choices lettered A, B, C…, with "Not sure" always last.
-- Where to ask them:
-  - If the client has a multiple-choice question tool (e.g. AskUserQuestion in Claude Code, question cards in Claude.ai), ask them there as clickable cards, after the reply text. Follow the tool's own limits, e.g. split five questions into two calls if it takes four at a time.
-  - Otherwise keep them in the reply and end with the answer-code line, so the user can reply with something like `1A 2D 3B`.
-  - Accept answer codes, free text or a mix. Ask again only about answers you could not map.
+- Ask at most FIVE questions, most important first. Each is an open question with a one-line "why" and a "For your tech team" line; no answer choices. The user answers in their own words.
+- Ask only what changes correctness or the design. Decide display and style preferences yourself and state the assumption.
+- If an answer is likely to need one follow-up (for example "the ERP can push changes" leads to "in which format?"), say so in that question's "why", so a second round is not a surprise.
+- Never mark a question as answered unless the user answered it.
 - Keep the design provisional while blockers are open. Do not create a blueprint unless the user asks for one.
 
 | Instead of | Write |
@@ -132,25 +130,22 @@ If a match is ambiguous, we don't guess. We flag it for a person to check.
 
 *Only promise what the design really does.*
 
-## [N] quick questions before we build
+## Questions we need answered before we build
 
-Pick the closest answer. "Not sure" is fine; we'll mark it as a gap.
+Answer in your own words. "I don't know" is fine; we'll mark it as a gap.
 
 **1. [Plain question]**
 Why we ask: [one sentence on the consequence]
-- **A** [choice] · **B** [choice] · **C** [choice] · **D** Not sure
 
 *For your tech team:* [precise technical ask, e.g. WSDL/XSD or BAPI name; one or several product lines?]
 
 *(repeat; at most five questions; most important first)*
 
-**How to answer:** reply with the question number and letter, e.g. `1A 2D 3B 4A 5C`. You can add words too: `1A, 3: we use our own table`.
-
 ## What happens next
 
 | I have the details | I don't have them yet |
 |---|---|
-| Reply with your answer codes. You'll get the real plan: workflow, tests and a step-by-step setup guide. | Say **"make a practice version"**. You'll get the same pack with sample data. Anything unknown is marked `TODO`. Safe to explore, not for real use. |
+| Answer the questions in chat. You'll get an updated page with the settled design, plus any follow-up questions. When nothing is blocking, say **"build it"** for the real workflow, tests and step-by-step setup guide. | Say **"make a practice version"**. You'll get the same pack with sample data. Anything unknown is marked `TODO`. Safe to explore, not for real use. |
 
 ---
 

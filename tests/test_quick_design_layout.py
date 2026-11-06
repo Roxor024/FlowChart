@@ -29,7 +29,7 @@ ORDER = [
     "How it will work",
     "Architecture: which systems talk to each other",
     "Mistakes it protects you from",
-    "quick questions before we build",
+    "Questions we need answered before we build",
     "What happens next",
     "Technical details for engineers",
     "Where things stand",
@@ -41,7 +41,7 @@ def positions(text, needles):
 
 
 def question_blocks(text):
-    section = text[text.index("quick questions before we build"):text.index("## What happens next")]
+    section = text[text.index("Questions we need answered before we build"):text.index("## What happens next")]
     return re.split(r"\n\*\*\d+\. ", section)[1:]
 
 
@@ -50,9 +50,10 @@ class QuickDesignTemplate(unittest.TestCase):
         skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("references/quick-design-template.md", skill)
         self.assertIn("make a practice version", skill)
-        for value in ("multiple-choice question tool", "AskUserQuestion", "Reply like: 1A 2D 3B 4A 5C"):
-            with self.subTest(value=value):
-                self.assertIn(value, skill)
+        self.assertIn("No answer choices", skill)
+        for gone in ("AskUserQuestion", "Reply like: 1A", "lettered"):
+            with self.subTest(gone=gone):
+                self.assertNotIn(gone, skill)
         for ref in ("references/outputs.md", "references/workflow.md"):
             self.assertIn("quick-design-template.md", (SKILL / ref).read_text(encoding="utf-8"), ref)
 
@@ -83,20 +84,11 @@ class QuickDesignExample(unittest.TestCase):
             with self.subTest(question=i):
                 self.assertIn("Why we ask:", block)
                 self.assertIn("For your tech team:", block)
-                choices = re.findall(r"\*\*([A-D])\*\* ([^·\n]+)", block)
-                self.assertTrue(2 <= len(choices) <= 4, choices)
-                self.assertEqual([c[0] for c in choices], list("ABCD")[:len(choices)], "letters must run A, B, C...")
-                self.assertTrue(choices[-1][1].startswith("Not sure"), "Not sure must be the last choice")
+                self.assertNotRegex(block, r"\*\*[A-D]\*\* ", "questions are open; no lettered choices")
 
-    def test_answer_code_instruction(self):
-        match = re.search(r"How to answer:.*?`((?:\d[A-D] ?)+)`", self.text)
-        self.assertIsNotNone(match, "missing answer-code example")
-        letters = {i: [c[0] for c in re.findall(r"\*\*([A-D])\*\* ", block)]
-                   for i, block in enumerate(question_blocks(self.text), 1)}
-        for code in match.group(1).split():
-            with self.subTest(code=code):
-                self.assertIn(code[1], letters[int(code[0])], "example code points to a choice that does not exist")
-        self.assertIn("clickable question cards", self.text)
+    def test_questions_are_open(self):
+        self.assertIn("Answer in your own words", self.text)
+        self.assertNotRegex(self.text, r"`1[A-D] 2[A-D]", "no answer codes")
 
     def test_language_rule_outcome(self):
         rule = self.text[self.text.index("## The language rule"):self.text.index("## Mistakes")]
@@ -149,6 +141,7 @@ class QuickDesignPage(unittest.TestCase):
         self.html = rqd.render(doc)
         self.c = _Collector()
         self.c.feed(self.html)
+        self.radios = sum(len(v) for v in self.c.radios.values())
 
     def test_self_contained(self):
         for tag, a in self.c.tags:
@@ -167,35 +160,27 @@ class QuickDesignPage(unittest.TestCase):
     def test_sections_and_questions(self):
         for needle in ("nothing has been built yet", "What you asked for, and what you’ll get", "How it will work",
                        "Architecture: which systems talk to each other", "Mistakes it protects you from",
-                       "quick questions before we build", "Technical details for engineers", "Where things stand"):
+                       "Questions we need answered before we build", "Technical details for engineers", "Where things stand"):
             with self.subTest(needle=needle):
                 self.assertIn(needle, self.html)
-        self.assertTrue(1 <= len(self.c.radios) <= 5)
-        for name, values in self.c.radios.items():
-            with self.subTest(question=name):
-                self.assertTrue(2 <= len(values) <= 4, values)
-                self.assertTrue(values[-1].startswith("Not sure"), values)
+        n = len(read_json(self.source)["questions"])
+        self.assertTrue(1 <= n <= 5)
+        self.assertEqual(self.radios, 0, "questions are open: no radio buttons")
+        self.assertIn("Answer in your own words", self.html)
+        self.assertIn("<details open><summary>Technical details for engineers", self.html)
 
     def test_page_is_honest_about_sending(self):
         # A static page cannot send answers back: no fake submit buttons, and it says to reply in chat.
         self.assertFalse(any(tag in ("button", "form") for tag, _ in self.c.tags), "no buttons that do nothing")
-        self.assertIn("this page can’t send anything", self.html)
+        self.assertIn("this page can’t send anything", self.html.lower())
         self.assertIn("make a practice version", self.html)
         for line in ("Validation: not executed", "Deployment: not performed", "Human review: pending", "Not yet"):
             self.assertIn(line, self.html)
         for claim in ("validation: passed", "validated successfully", "production-ready", "production ready"):
             self.assertNotIn(claim, self.html.lower())
-        self.assertEqual(self.html.count("Why we ask:"), len(self.c.radios))
-        self.assertEqual(self.html.count("For your tech team:"), len(self.c.radios))
-
-    def test_answer_code_on_page_is_valid(self):
-        doc = read_json(self.source)
-        for code in rqd.answer_code(doc["questions"]).split():
-            q = doc["questions"][int(code[0]) - 1]
-            with self.subTest(code=code):
-                letter = "ABCD".index(code[1])
-                self.assertLess(letter, len(q["choices"]))
-                self.assertFalse(q["choices"][letter].startswith("Not sure"), "example code should not pick Not sure")
+        n = len(read_json(self.source)["questions"])
+        self.assertEqual(self.html.count("Why we ask:"), n)
+        self.assertEqual(self.html.count("For your tech team:"), n)
 
     def test_accessible_basics(self):
         self.assertIn('<html lang="en">', self.html)
@@ -219,8 +204,9 @@ class RendererRules(unittest.TestCase):
     def test_rejects_rule_breaks(self):
         cases = {
             "six questions": lambda d: d["questions"].append(copy.deepcopy(d["questions"][0])),
-            "no Not sure": lambda d: d["questions"][0]["choices"].__setitem__(-1, "Maybe"),
-            "five choices": lambda d: d["questions"][0]["choices"].insert(0, "Extra"),
+            "answer choices": lambda d: d["questions"][0].__setitem__("choices", ["Yes", "No"]),
+            "missing why": lambda d: d["questions"][0].pop("why"),
+            "no technical details": lambda d: d.pop("technical"),
             "skipping an area": lambda d: d["architecture"]["flow"].append({"from": 0, "to": 2, "text": "jump"}),
             "unknown status": lambda d: d["requirements"][0].__setitem__("status", "done"),
             "claims validation": lambda d: d.__setitem__("summary", "Validated successfully and ready."),
@@ -246,13 +232,13 @@ class RendererRules(unittest.TestCase):
             self.assertEqual(ok.returncode, 0, ok.stderr)
             self.assertTrue(out.is_file())
             bad_doc = read_json(EXAMPLE_JSON)
-            bad_doc["questions"][0]["choices"][-1] = "Maybe"
+            bad_doc["questions"][0]["choices"] = ["Yes", "No"]
             bad = Path(tmp) / "bad.json"
             bad.write_text(json.dumps(bad_doc), encoding="utf-8")
             out2 = Path(tmp) / "bad.html"
             res = subprocess.run([sys.executable, "-I", str(RENDERER), str(bad), str(out2)], capture_output=True, text=True)
             self.assertEqual(res.returncode, 1)
-            self.assertIn("Not sure", res.stderr)
+            self.assertIn("remove 'choices'", res.stderr)
             self.assertFalse(out2.exists(), "no page may be written for invalid content")
             res = subprocess.run([sys.executable, "-I", str(RENDERER), str(Path(tmp) / "missing.json"), str(out2)],
                                  capture_output=True, text=True)

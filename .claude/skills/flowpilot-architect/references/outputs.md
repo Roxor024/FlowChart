@@ -10,17 +10,17 @@
 5. **Our suggestion**: one sentence naming the simplest viable design. Alternatives belong in the technical section.
 6. **The scenario's key rule as an example** (for instance "SAP has X · Dataverse has Y → created / skipped / ignored"), and that ambiguous matches are flagged for a person, never guessed.
 7. **Mistakes it protects you from**: 3–4 plain promises that the design really delivers.
-8. **Questions (at most five)**: plain title, "Why we ask:" in one sentence, 2–4 answer choices lettered A, B, C… with "Not sure" always last (recorded as a gap), and a "For your tech team:" line with the precise technical ask. Ask them as clickable cards when the client has a multiple-choice question tool; otherwise end the list with an answer-code line ("Reply like: 1A 2D 3B 4A 5C"). Answer codes, free text and a mix are all accepted.
-9. **Next step**: two labelled choices, "I have the details" (answer the questions) and "I don't have them yet" (say "make a practice version" for a Full Build Pack with sample data and marked TODOs, not for real use).
-10. **Technical details for engineers** (optional, last): REQ table with what is still unknown, numbered workflow steps, trade-offs, alternative and "not recommended yet".
+8. **Questions (at most five)**: open questions in plain words, each with "Why we ask:" in one sentence and a "For your tech team:" line with the precise technical ask. No answer choices; the user answers in their own words, and "I don't know" is recorded as a gap. Ask only what changes correctness or the design.
+9. **Next step**: two labelled choices, "I have the details" (answer the questions; the reply is an updated Quick Design, and "build it" starts the Full Build Pack once nothing is blocking) and "I don't have them yet" (say "make a practice version" for a Full Build Pack with sample data and marked TODOs, not for real use).
+10. **Technical details for engineers** (always included, last; readers may skip it): REQ table with what is still unknown, numbered workflow steps, trade-offs, alternative and "not recommended yet".
 11. **Where things stand**: Idea understood · Your answers (0 of N) · Automatically checked · Reviewed by a person · Deployed (never by FlowPilot), followed by the standard Validation / Deployment / Human review lines saying the same thing.
 12. **Words you'll see**: at most six terms used in the reply.
 
 Writing rules: sentences of 25 words or fewer, one idea per bullet, no paragraph over three lines, sample values labelled as examples, no invented system names, field names or limits. Keep the ≤5 questions, provisional-status and no-blueprint rules. Do NOT generate the long ten-section manual or code ZIP by default. A worked example is in `examples/quick-design-dataverse-sap.md` at the repository root (not packaged).
 
-**Delivery.** Put the content in `quick-design.json` (shape: `assets/quick-design.example.json`) and render it with `scripts/render_quick_design.py`; deliver the page plus a 3–5 line chat summary and the questions (clickable cards when available, otherwise lettered with an answer-code line). Never hand-write the page's HTML. Without Python or file access, reply in markdown with the template. Aim to finish within 60 seconds: read only SKILL.md, the template and the example JSON.
+**Delivery.** Put the content in `quick-design.json` (shape: `assets/quick-design.example.json`) and render it with `scripts/render_quick_design.py`; deliver the page plus a one- or two-line chat note and the open questions as a plain numbered list. Never hand-write the page's HTML. Without Python or file access, reply in markdown with the template. Aim to finish within 60 seconds: read only SKILL.md and the template.
 
-**Full Build Pack: opt-in or explicitly requested.** Apply the sections below only in this mode. A provisional build pack may contain synthetic adapters, but its missing WSDL and Dataverse schema must be prominent.
+**Full Build Pack: opt-in or explicitly requested.** Procedure and tools: `references/full-build-pack.md`; `scripts/render_build_guide.py` produces the guide below from the blueprint plus `guide-extras.json`. Apply the sections below only in this mode. A provisional build pack may contain synthetic adapters, but its missing WSDL and Dataverse schema must be prominent.
 
 The user's primary output is an implementation guide, not JSON and not an architecture audit. Keep the machine-readable blueprint in a separate advanced export; it provides validation, traceability and future automation.
 

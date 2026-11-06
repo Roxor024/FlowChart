@@ -61,19 +61,14 @@
   ],
   "questions": [
     {"title": "How does SAP accept a new consignment order?", "why": "We have to send orders in exactly the format SAP expects, or SAP rejects them.",
-     "choices": ["Web service (SOAP)", "BAPI / RFC function", "IDoc or OData", "Not sure, I'll ask the SAP team"],
      "tech": "WSDL/XSD, BAPI/RFC name, IDoc type or OData service for create and for reading product texts; one or several product lines?"},
     {"title": "How can we be sure SAP really saved the order?", "why": "SAP can reply OK and still not save it. Checking stops lost or doubled orders.",
-     "choices": ["We can look the order up in SAP", "SAP can store our Dataverse order ID", "Both", "Not sure"],
      "tech": "Commit behaviour and read-back operation; can SAP store the Dataverse ID as an external reference?"},
     {"title": "Where are the languages kept in Dataverse?", "why": "To match languages correctly. For example, SAP calls German D and Dataverse calls it 1031.",
-     "choices": ["Dataverse's built-in languages", "Our own language table", "Not sure"],
      "tech": "Provisioned LCIDs or custom table; SPRAS/LAISO to Dataverse mapping; table and key column names"},
     {"title": "Should the user wait for SAP, or just see a status?", "why": "SAP can be slow. Showing a status (Processing, then Synced) avoids timeouts.",
-     "choices": ["Show a status (recommended)", "Wait for the result", "Not sure"],
      "tech": "Trigger type (Power Automate, plugin/webhook or Dataverse connector) and required fields"},
     {"title": "Where does your SAP system run?", "why": "This decides how Azure can reach SAP safely, and it affects cost.",
-     "choices": ["In our own data centre", "In a private cloud network", "Not sure"],
      "tech": "On-premises data gateway or VNet; Logic Apps Consumption or Standard; identity for Dataverse"}
   ],
   "technical": {
