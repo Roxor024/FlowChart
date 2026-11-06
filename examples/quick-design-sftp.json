@@ -54,19 +54,14 @@
   ],
   "questions": [
     {"title": "Where is the SFTP server?", "why": "It decides how Azure connects and how it's secured.",
-     "choices": ["The supplier's server", "Azure Blob Storage SFTP", "Our own server", "Not sure"],
      "tech": "Host type, authentication method, inbound or outbound connection, VNet/gateway needs"},
     {"title": "How do suppliers show an upload is finished?", "why": "Reading a half-uploaded file can corrupt an order.",
-     "choices": ["A .ready marker file", "Rename after upload", "File size stops changing", "Not sure"],
      "tech": "Finalisation contract, file naming pattern, atomic rename support"},
     {"title": "Where should valid orders go?", "why": "Storing a file is different from creating orders in a business system.",
-     "choices": ["Archive the file only", "Dataverse", "ERP or order API", "Not sure"],
      "tech": "Target interface, schema, persistence and transaction boundary"},
     {"title": "What counts as the same file?", "why": "Two files with the same name can hold different orders.",
-     "choices": ["Supplier + file name", "File contents (hash)", "Supplier + order number", "Not sure"],
      "tech": "Idempotency key, replay window, conflict handling"},
     {"title": "When should the supplier get an acknowledgement?", "why": "Receiving a file is not the same as processing it successfully.",
-     "choices": ["As soon as it's safely received", "After checks and storage", "After the order is created", "Not sure"],
      "tech": "ACK/NACK format, timing, retry contract"}
   ],
   "technical": {

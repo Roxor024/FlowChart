@@ -1,0 +1,42 @@
+{
+  "title": "Order intake: accept each order exactly one time in our system (sample)",
+  "summary": "Orders arrive over HTTP, are stored once, and an ERP worker sends them on later. This is a synthetic test pack.",
+  "glossary": [{"term": "Function app", "meaning": "Small pieces of code Azure runs for you."}],
+  "architecture": {
+    "areas": [
+      {"name": "Internet", "main": {"name": "Web shop", "text": "Sends orders over HTTP"}},
+      {"name": "Azure", "main": {"name": "API Management + Function", "text": "Checks and stores each order once"},
+       "support": [{"name": "Service Bus", "text": "Queue for the ERP worker"}]}
+    ],
+    "flow": [
+      {"from": 0, "to": 1, "text": "The shop sends an order."},
+      {"from": 1, "to": 0, "text": "The shop gets 202 with the order ID after the order is stored."}
+    ]
+  },
+  "prerequisites": ["An Azure test subscription (no production data)", "Python 3.11"],
+  "unknowns": ["The ERP's real error codes (sample codes are used)."],
+  "not_used": "Logic Apps: the intake must answer within one HTTP call.",
+  "tasks": {
+    "IMP-003": {
+      "where": "Your code editor, then Azure portal > Function App",
+      "actions": ["Open function_app/intake.py.", "Run the tests: python -m pytest function_app/tests.", "Deploy only through your approved pipeline."],
+      "files": ["function_app/intake.py", "function_app/tests/test_intake.py"],
+      "docs": [{"title": "Azure Functions Python developer guide", "url": "https://learn.microsoft.com/azure/azure-functions/functions-reference-python", "verified": true}],
+      "if_it_fails": "Read the failing test name; it says which rule broke. Fix the code, not the test."
+    },
+    "IMP-005": {
+      "where": "Your code editor",
+      "actions": ["Write the ERP worker using the sample error codes.", "Replace the sample codes when the ERP team sends the real ones."],
+      "files": [],
+      "docs": [{"title": "Service Bus message sessions and scheduling", "url": "https://learn.microsoft.com/azure/service-bus-messaging/message-sequencing", "verified": false}],
+      "if_it_fails": "Check the dead-letter queue for the reason, fix it, and replay with a new message ID."
+    }
+  },
+  "walkthrough": ["The shop sends order O-1.", "It is stored and the shop gets 202 with O-1.", "The shop sends O-1 again: same answer, nothing new stored."],
+  "troubleshooting": [{"symptom": "The shop gets 400", "cause": "The order ID is missing", "fix": "Send the order ID in the request."}],
+  "artifacts": [
+    {"path": "function_app/intake.py", "state": "WORKING LOCAL EXAMPLE", "note": "Logic only; no Azure SDK."},
+    {"path": "function_app/tests/test_intake.py", "state": "WORKING LOCAL EXAMPLE"},
+    {"path": "apim/policy.xml", "state": "UNVERIFIED STARTER", "note": "Not tried in API Management."}
+  ]
+}
