@@ -61,22 +61,26 @@ class _Html(HTMLParser):
             self.problems.append(f"line {self.getpos()[0]}: stray </{tag}>")
 
 
-def run_tests(root: Path):
+def run_tests(root: Path, runner: str = "auto"):
     test_files = [p for p in files(root, ".py") if p.name.startswith("test_")]
     if not test_files:
         return "NOT RUN", "no test_*.py files", ""
     test_dir = test_files[0].parent
     work = test_dir.parent if (test_dir.name == "tests") else test_dir
-    if importlib.util.find_spec("pytest"):
+    if runner == "pytest" or (runner == "auto" and importlib.util.find_spec("pytest")):
         cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(test_dir.relative_to(work))]
     else:
-        cmd = [sys.executable, "-m", "unittest", "discover", "-s", str(test_dir.relative_to(work)), "-t", "."]
+        rel = str(test_dir.relative_to(work))
+        # The test folder is its own top level, so it does not need an __init__.py.
+        cmd = [sys.executable, "-m", "unittest", "discover", "-s", rel, "-t", rel]
     try:
         p = subprocess.run(cmd, cwd=work, capture_output=True, text=True, timeout=300)
     except subprocess.TimeoutExpired:
         return "FAIL", "tests timed out after 300 s", ""
     output = (p.stdout + p.stderr).strip()
     last = [line for line in output.splitlines() if line.strip()][-1:] or ["(no output)"]
+    if re.search(r"\bRan 0 tests\b|no tests ran", output, re.I):
+        return "FAIL", f"{' '.join(cmd[2:3])}: no tests found (write unittest.TestCase classes)", output
     return ("PASS" if p.returncode == 0 else "FAIL"), f"{' '.join(cmd[2:3])}: {last[0]}", output
 
 
@@ -84,6 +88,8 @@ def main(argv) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("pack")
     ap.add_argument("--blueprint", default="integration-blueprint.json")
+    ap.add_argument("--runner", choices=("auto", "pytest", "unittest"), default="auto",
+                    help="test runner for the pack's local tests (default: pytest if installed, else unittest)")
     args = ap.parse_args(argv[1:])
     root = Path(args.pack)
     if not root.is_dir():
@@ -142,7 +148,7 @@ def main(argv) -> int:
     elif yamls:
         results.append(("YAML parses", "NOT RUN", "PyYAML not installed"))
 
-    status, detail, test_output = run_tests(root)
+    status, detail, test_output = run_tests(root, args.runner)
     results.append(("Local tests (synthetic data)", status, detail))
 
     validator = None
