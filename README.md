@@ -1,34 +1,46 @@
 # FlowPilot v0.4.1
 
-Azure-first **integration engineering assistant** packaged as a Claude Skill for Claude Code and Claude.ai. An internal-pilot prototype: it designs and reviews, it never deploys.
+FlowPilot is a free, open-source **Claude Skill that helps you design Azure integrations**: connecting apps such as an ERP, CRM, SAP or Dataverse through Azure services like API Management, Functions, Logic Apps, Service Bus, Event Grid and SFTP.
 
-## What it does
-Turns integration requirements into clarified requirements (with stable IDs and explicit unknowns/conflicts), a recommended Azure architecture with alternatives, ADRs, an implementation plan, a test matrix, a risk register and operations guidance — plus a machine-readable blueprint that an offline validator checks.
+You describe what should happen in plain words. FlowPilot replies with a one-page **Quick Design**:
+- what it understood;
+- how the integration would work, with a diagram;
+- what could go wrong;
+- the few questions that still need answering.
 
-## Layout
+When you're ready, it can make a **build pack**: a step-by-step guide, starter code, local tests and a checked design file.
+
+> **Important: FlowPilot designs; it never deploys.** It creates nothing in Azure and never asks for passwords or keys. Everything it produces is a draft for a person to review. A "practice version" uses sample data and is not for real use. Read the [disclaimer](#disclaimer) before relying on any output.
+
+## Install
+
+### Claude.ai (Pro, Max, Team or Enterprise)
+1. Download `flowpilot-architect.zip` from the latest [release](../../releases), or build it yourself with `python tools/package_skill.py` (it writes `dist/flowpilot-architect.zip`).
+2. In Claude, open **Customize > Skills** and upload the ZIP. Code execution must be turned on in your settings.
+3. Start a chat and describe your integration, for example: *"Our mobile app needs to show order status from our ERP, which only has a SOAP interface."*
+
+### Claude Code
+Clone this repository and run `claude` in its root. The skill in `.claude/skills/flowpilot-architect/` is picked up automatically. Try it with the scenario in `examples/order-processing/SCENARIO.md`.
+
+## How a session goes
+1. **Describe the integration.** You get a Quick Design page and up to five plain questions. Answer them in your own words; "I don't know" is fine.
+2. **Answer the questions.** You get an updated page with the settled design.
+3. **Say "build it"** when nothing is blocking, or **"make a practice version"** to explore with sample data. Either way you get a build pack with a guide page, code, tests and a check report.
+
+## What's in this repository
 ```
-.claude/skills/flowpilot-architect/   ← the skill (this folder is the Claude.ai upload)
-  SKILL.md
-  references/   workflow, Azure patterns, output contract, reference scenario
-  assets/       integration-blueprint.schema.json (0.4.0), example-blueprint.json
-  scripts/      validate_blueprint.py, render_report.py, render_quick_design.py,
-                render_build_guide.py, check_pack.py
-examples/       order-processing (draft), vague-sap-crm and conflicting-erp-sla (provisional),
-                quick-design-dataverse-sap.md (markdown Quick Design reply), quick-design-sftp.json (page input)
-tools/          thin wrappers + package_skill.py
-tests/          unit, regression (adversarial) and packaging tests
+.claude/skills/flowpilot-architect/   the skill (this folder is what the ZIP contains)
+  SKILL.md       instructions Claude follows
+  references/    templates, procedures, Azure patterns, checked documentation links
+  assets/        blueprint schema (0.4.0) and examples
+  scripts/       validate_blueprint.py, render_report.py, render_quick_design.py,
+                 render_build_guide.py, check_pack.py
+examples/        worked examples (order processing, vague and conflicting requests, Quick Designs)
+tools/           packaging and thin wrappers around the scripts
+tests/           unit, regression and packaging tests (synthetic data only)
 ```
 
-## Claude Code
-Clone the repository, run `claude` in its root and invoke `/flowpilot-architect` with the scenario in `examples/order-processing/SCENARIO.md`.
-
-## Claude.ai
-```sh
-python tools/package_skill.py          # writes dist/flowpilot-architect.zip
-```
-Upload the ZIP as a custom skill. It contains the schema, example, validator and renderer. If the chat environment cannot run Python or lacks `jsonschema`, the skill must report `Validation: NOT EXECUTED`.
-
-## Local checks
+## Local checks (for contributors)
 ```sh
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v
@@ -41,7 +53,7 @@ Validator exit codes: `0` passed automated checks (not approval) · `1` invalid 
 
 `--evidence-dir DIR` makes the validator check that every `passed`/`failed` test's `artifactHash` matches the SHA-256 of the artifact at `DIR/<evidenceRef>`. Without it, test evidence is reported as NOT VERIFIED.
 
-The renderer validates first and **refuses** to write a report for an invalid or unvalidated blueprint (exit 1, or 3 if `jsonschema` is missing). `--preview` writes a draft marked NOT VALIDATED with any approval claim hidden (exit 4). Approvals are always displayed as claims to confirm in your review system.
+The report renderer validates first and **refuses** to write a report for an invalid or unvalidated blueprint (exit 1, or 3 if `jsonschema` is missing). `--preview` writes a draft marked NOT VALIDATED with any approval claim hidden (exit 4). Approvals are always displayed as claims to confirm in your review system.
 
 ## Blueprint status model
 | Status | Meaning |
@@ -50,12 +62,18 @@ The renderer validates first and **refuses** to write a report for an invalid or
 | `draft` | Complete proposal awaiting human review |
 | `approved` | Human reviewer, RFC 3339 review time and an external review record; no blocking questions, open conflicts or unknown requirements |
 
-## Safety / scope
-No Azure deployment or resource-changing commands. Synthetic or authorised sanitised data only. Never store credentials in blueprints. Approval and test results come from people and CI, never from the model. See `docs/SECURITY.md`.
+## Safety
+- No Azure deployment or resource-changing commands.
+- Use synthetic or sanitised data. Don't paste customer data, passwords, keys or connection strings into a chat.
+- Credentials never go in blueprints; the validator rejects common secret formats.
+- Approval and test results come from people and CI, never from the model.
 
-## Limits
-- A blueprint's `approved` status and test results are **claims**. Offline checks verify their shape (and, with `--evidence-dir`, artifact hashes), not who approved or whether a test really ran. Confirm approvals in your PR/change system.
-- `tests/test_retry_model.py` models documented Service Bus behaviour; it is not a test against Azure.
+See [`docs/SECURITY.md`](docs/SECURITY.md) for details and how to report a problem.
 
-## Status
-Pilot, based on `flowpilot-v0.3`. Validate and review every artifact before use. See `CHANGELOG.md`.
+## Disclaimer
+FlowPilot is an experimental design aid, provided "as is" under the [MIT License](LICENSE) without warranty of any kind. Its output can be wrong or incomplete: service limits, prices and portal steps change, and documentation links may go stale. A qualified engineer must review every design, run the tests in a safe environment and follow your organisation's security and change processes before anything reaches production. Approvals and test results in a blueprint are **claims**: offline checks verify their shape (and, with `--evidence-dir`, artifact hashes), not who approved or whether a test really ran. `tests/test_retry_model.py` models documented Service Bus behaviour; it is not a test against Azure.
+
+FlowPilot is a community project. It is not affiliated with or endorsed by Microsoft or Anthropic. Azure and the Azure service names are trademarks of Microsoft.
+
+## Contributing
+Issues and pull requests are welcome. Please run the local checks above and keep all examples synthetic. See `CHANGELOG.md` for the history.
