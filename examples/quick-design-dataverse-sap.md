@@ -75,25 +75,22 @@ If a language could match two options (for example English → US or UK), we don
 - **No endless loops**: when we mark the order "Synced", that change won't start the flow again.
 - **Problems are visible**: if anything is unsure, the order says "Needs checking" instead of failing silently.
 
-## 5 quick questions before we build
+## Questions we need answered before we build
 
-Pick the closest answer. "Not sure" is fine; we'll mark it as a gap.
+Answer in your own words. "I don't know" is fine; we'll mark it as a gap.
 
 **1. How does SAP accept a new consignment order?**
 Why we ask: we have to send orders in exactly the format SAP expects, or SAP rejects them.
-- **A** Web service (SOAP) · **B** BAPI / RFC function · **C** IDoc or OData · **D** Not sure, I'll ask the SAP team
 
 *For your tech team:* WSDL/XSD, BAPI/RFC name, IDoc type or OData service for create and for reading product texts. One product line or several per consignment?
 
 **2. How can we be sure SAP really saved the order?**
 Why we ask: SAP can reply "OK" and still not save it. Checking stops lost or doubled orders.
-- **A** We can look the order up in SAP · **B** SAP can store our Dataverse order ID · **C** Both · **D** Not sure
 
 *For your tech team:* commit behaviour and read-back operation. Can SAP store the Dataverse consignment ID as an external reference, so a retry can find the order?
 
 **3. Where are the languages kept in Dataverse?**
 Why we ask: to match languages correctly. For example, SAP calls German "D" and Dataverse calls it 1031.
-- **A** Dataverse's built-in languages · **B** Our own language table · **C** Not sure
 
 *For your tech team:* provisioned LCIDs or a custom table. We also need:
 - the SAP SPRAS/LAISO to Dataverse mapping,
@@ -102,23 +99,19 @@ Why we ask: to match languages correctly. For example, SAP calls German "D" and 
 
 **4. Should the user wait for SAP, or just see a status?**
 Why we ask: SAP can be slow. Showing a status (Processing → Synced) avoids timeouts.
-- **A** Show a status (recommended) · **B** Wait for the result · **C** Not sure
 
 *For your tech team:* trigger type (Power Automate, plugin/webhook or Dataverse connector) and the list of required fields.
 
 **5. Where does your SAP system run?**
 Why we ask: this decides how Azure can reach SAP safely, and it affects cost.
-- **A** In our own data centre · **B** In a private cloud network · **C** Not sure
 
 *For your tech team:* on-premises data gateway or VNet path; Logic Apps Consumption or Standard; identity to use for Dataverse.
-
-**How to answer:** reply with the question number and letter, e.g. `1B 2C 3A 4A 5C`. You can add words too: `1B, 3: we use our own table`. If your chat shows clickable question cards, just click your answers there.
 
 ## What happens next
 
 | I have the details | I don't have them yet |
 |---|---|
-| Reply with your answer codes. You'll get the real plan: workflow, tests and a step-by-step setup guide. | Say **"make a practice version"**. You'll get the same pack with sample data. Anything unknown is marked `TODO`. Safe to explore, not for real use. |
+| Answer the questions in chat. You'll get the real plan: workflow, tests and a step-by-step setup guide. | Say **"make a practice version"**. You'll get the same pack with sample data. Anything unknown is marked `TODO`. Safe to explore, not for real use. |
 
 ---
 
