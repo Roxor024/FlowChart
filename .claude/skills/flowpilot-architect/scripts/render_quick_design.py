@@ -51,22 +51,7 @@ def check(doc) -> list[str]:
     for i, s in enumerate(steps if isinstance(steps, list) else [], 1):
         need(isinstance(s, dict) and s.get("title") and s.get("text"), f"step {i}: needs 'title' and 'text'")
 
-    arch = doc["architecture"]
-    areas = arch.get("areas") if isinstance(arch, dict) else None
-    need(isinstance(areas, list) and 2 <= len(areas) <= 3, "architecture.areas: 2-3 areas")
-    if isinstance(areas, list):
-        for i, a in enumerate(areas):
-            need(isinstance(a, dict) and a.get("name") and isinstance(a.get("main"), dict)
-                 and a["main"].get("name"), f"area {i}: needs 'name' and 'main': {{'name', 'text'}}")
-            need(len(a.get("support", [])) <= 2 if isinstance(a, dict) else False, f"area {i}: at most 2 support boxes")
-        flow = arch.get("flow", [])
-        need(isinstance(flow, list) and 1 <= len(flow) <= 6, "architecture.flow: 1-6 numbered steps")
-        for i, f in enumerate(flow if isinstance(flow, list) else [], 1):
-            ok = isinstance(f, dict) and isinstance(f.get("from"), int) and isinstance(f.get("to"), int)
-            need(ok and f.get("text"), f"flow {i}: needs integer 'from', 'to' and 'text'")
-            if ok:
-                need(0 <= f["from"] < len(areas) and 0 <= f["to"] < len(areas), f"flow {i}: area index out of range")
-                need(abs(f["from"] - f["to"]) == 1, f"flow {i}: arrows only between neighbouring areas")
+    check_architecture(doc["architecture"], errors)
 
     qs = doc["questions"]
     need(isinstance(qs, list) and 1 <= len(qs) <= 5, "questions: 1-5 (never more than five)")
@@ -75,12 +60,11 @@ def check(doc) -> list[str]:
             errors.append(f"question {i}: must be an object")
             continue
         for key in ("title", "why", "tech"):
-            need(q.get(key), f"question {i}: needs '{key}'")
-        ch = q.get("choices")
-        need(isinstance(ch, list) and 2 <= len(ch) <= 4, f"question {i}: 2-4 choices")
-        if isinstance(ch, list) and ch:
-            need(str(ch[-1]).startswith("Not sure"), f"question {i}: last choice must start with 'Not sure'")
-            need(len(set(ch)) == len(ch), f"question {i}: duplicate choices")
+            need(isinstance(q.get(key), str) and q[key].strip(), f"question {i}: needs '{key}'")
+        need("choices" not in q, f"question {i}: questions are open; remove 'choices' (the user answers in their own words)")
+    tech = doc.get("technical")
+    need(isinstance(tech, dict) and any(tech.get(k) for k in ("requirements", "steps", "notes")),
+         "technical: required, with at least one of requirements, steps or notes (engineers read it)")
     need(len(doc.get("protections", [])) <= 4, "protections: at most 4")
     need(len(doc.get("glossary", [])) <= 6, "glossary: at most 6 terms")
 
@@ -88,11 +72,6 @@ def check(doc) -> list[str]:
     for claim in FORBIDDEN_CLAIMS:
         need(claim not in text, f"content claims '{claim}': a Quick Design is never validated or production-ready")
     return errors
-
-
-def answer_code(questions) -> str:
-    """A valid example code that never picks 'Not sure', e.g. '1A 2B 3A'."""
-    return " ".join(f"{i}{'AB'[(i - 1) % 2] if len(q['choices']) > 2 else 'A'}" for i, q in enumerate(questions, 1))
 
 
 CSS = """
@@ -131,12 +110,10 @@ ol.reqs li{display:flex;justify-content:space-between;gap:12px;align-items:flex-
 .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:12px;font-size:14px}.legend div{display:flex;gap:10px}
 .rule{display:flex;flex-direction:column;gap:8px}.rule div{display:flex;gap:10px}.rule b{min-width:120px}
 .protect{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:12px}.protect div{border:1px solid #E2E6EB;border-radius:12px;padding:16px}.protect span{display:block;font-size:14px;color:#4A5563}
-fieldset{border:1px solid #E2E6EB;border-radius:14px;padding:20px;margin:0;display:flex;flex-direction:column;gap:12px}
-legend{padding:0 6px;font-size:13px;font-weight:700;color:#9A3F07}.q{font-size:18px;font-weight:700}.why{color:#4A5563;font-size:15px}
-.choices{display:flex;flex-wrap:wrap;gap:8px}.pill{display:inline-flex}.pill input{position:absolute;opacity:0;width:1px;height:1px}
-.pill span{min-height:44px;display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid #C9D0D8;background:#FFF;cursor:pointer}
-.pill input:checked+span{background:#1F5FD1;border-color:#1F5FD1;color:#FFF;font-weight:600}.pill input:focus-visible+span{outline:3px solid #1F5FD1;outline-offset:2px}
-.ltr{display:inline-flex;width:22px;height:22px;border-radius:6px;background:#EEF1F5;color:#17202B;font-size:13px;font-weight:700;align-items:center;justify-content:center}.pill input:checked+span .ltr{background:#FFF;color:#1F5FD1}
+ol.qs{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+ol.qs li{border:1px solid #E2E6EB;border-radius:14px;padding:18px 20px;display:flex;gap:14px}
+.qn{flex:none;width:32px;height:32px;border-radius:999px;background:#17202B;color:#FFF;font-weight:700;display:flex;align-items:center;justify-content:center}
+.qb{display:flex;flex-direction:column;gap:6px;min-width:0}.q{font-size:18px;font-weight:700}.why{color:#4A5563;font-size:15px}
 .tech{font-size:13px;color:#5B6573}.code{font-family:ui-monospace,Menlo,Consolas,monospace;background:#FFF7ED;color:#9A3F07;padding:1px 6px;border-radius:4px}
 .next{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px}.next div{border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:10px}
 .dark{background:#17202B;color:#FFF}.dark small{color:#B9C6FF}.light{background:#FFF;border:1px solid #E2E6EB}.light small{color:#4A5563}
@@ -149,6 +126,65 @@ table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}th,td{t
 .v{display:none}
 @media (max-width:720px){h1{font-size:30px}.arch{flex-direction:column}.area h4{min-height:0}.link{width:auto;flex-direction:row;gap:24px;padding:8px 0}.h{display:none}.v{display:inline}}
 """
+
+
+def architecture_html(arch) -> str:
+    """The 2-3 area diagram with numbered arrows and legend; shared with render_build_guide.py."""
+    e = esc
+    out = []
+    w = out.append
+    areas, flow = arch["areas"], arch.get("flow", [])
+    w('<section class="card"><div><h2>Architecture: which systems talk to each other</h2>'
+      '<p class="sub">The numbers show the order things happen. Dashed boxes are supporting services.</p></div>'
+      '<div class="arch">')
+    for i, a in enumerate(areas):
+        if i:
+            fwd = [n for n, f in enumerate(flow, 1) if f["from"] == i - 1 and f["to"] == i]
+            back = [n for n, f in enumerate(flow, 1) if f["from"] == i and f["to"] == i - 1]
+            w('<div class="link" aria-hidden="true">')
+            if fwd:
+                w('<div>' + "".join(f'<span class="n">{n}</span>' for n in fwd) + ' <span class="h">→</span><span class="v">↓</span></div>')
+            if back:
+                w('<div><span class="h">←</span><span class="v">↑</span> ' + "".join(f'<span class="n">{n}</span>' for n in back) + '</div>')
+            w('</div>')
+        w(f'<div class="area area{i}"><h4>{e(a["name"])}</h4>'
+          f'<div class="sys core"><b>{e(a["main"]["name"])}</b>{e(a["main"].get("text", ""))}</div>')
+        for s in a.get("support", []):
+            w(f'<div class="sys support"><b>{e(s["name"])}</b>{e(s.get("text", ""))}</div>')
+        w('</div>')
+    w('</div><div class="legend">')
+    for n, f in enumerate(flow, 1):
+        w(f'<div><span class="n">{n}</span><span>{e(f["text"])}</span></div>')
+    w('</div>')
+    if arch.get("note"):
+        w(f'<div class="small">{e(arch["note"])}</div>')
+    w('</section>\n')
+    return "".join(out)
+
+
+def check_architecture(arch, errors) -> None:
+    """Rule checks for the architecture block; appends messages to errors."""
+    areas = arch.get("areas") if isinstance(arch, dict) else None
+    if not (isinstance(areas, list) and 2 <= len(areas) <= 3):
+        errors.append("architecture.areas: 2-3 areas")
+        return
+    for i, a in enumerate(areas):
+        if not (isinstance(a, dict) and a.get("name") and isinstance(a.get("main"), dict) and a["main"].get("name")):
+            errors.append(f"area {i}: needs 'name' and 'main': {{'name', 'text'}}")
+        elif len(a.get("support", [])) > 2:
+            errors.append(f"area {i}: at most 2 support boxes")
+    flow = arch.get("flow", [])
+    if not (isinstance(flow, list) and 1 <= len(flow) <= 6):
+        errors.append("architecture.flow: 1-6 numbered steps")
+        return
+    for i, f in enumerate(flow, 1):
+        ok = isinstance(f, dict) and isinstance(f.get("from"), int) and isinstance(f.get("to"), int)
+        if not (ok and f.get("text")):
+            errors.append(f"flow {i}: needs integer 'from', 'to' and 'text'")
+        elif not (0 <= f["from"] < len(areas) and 0 <= f["to"] < len(areas)):
+            errors.append(f"flow {i}: area index out of range")
+        elif abs(f["from"] - f["to"]) != 1:
+            errors.append(f"flow {i}: arrows only between neighbouring areas")
 
 
 def render(doc) -> str:
@@ -197,33 +233,7 @@ def render(doc) -> str:
     w('</section>\n')
 
     # Architecture
-    arch = doc["architecture"]
-    areas, flow = arch["areas"], arch.get("flow", [])
-    w('<section class="card"><div><h2>Architecture: which systems talk to each other</h2>'
-      '<p class="sub">The numbers show the order things happen. Dashed boxes are supporting services.</p></div>'
-      '<div class="arch">')
-    for i, a in enumerate(areas):
-        if i:
-            fwd = [n for n, f in enumerate(flow, 1) if f["from"] == i - 1 and f["to"] == i]
-            back = [n for n, f in enumerate(flow, 1) if f["from"] == i and f["to"] == i - 1]
-            w('<div class="link" aria-hidden="true">')
-            if fwd:
-                w('<div>' + "".join(f'<span class="n">{n}</span>' for n in fwd) + ' <span class="h">→</span><span class="v">↓</span></div>')
-            if back:
-                w('<div><span class="h">←</span><span class="v">↑</span> ' + "".join(f'<span class="n">{n}</span>' for n in back) + '</div>')
-            w('</div>')
-        w(f'<div class="area area{i}"><h4>{e(a["name"])}</h4>'
-          f'<div class="sys core"><b>{e(a["main"]["name"])}</b>{e(a["main"].get("text", ""))}</div>')
-        for s in a.get("support", []):
-            w(f'<div class="sys support"><b>{e(s["name"])}</b>{e(s.get("text", ""))}</div>')
-        w('</div>')
-    w('</div><div class="legend">')
-    for n, f in enumerate(flow, 1):
-        w(f'<div><span class="n">{n}</span><span>{e(f["text"])}</span></div>')
-    w('</div>')
-    if arch.get("note"):
-        w(f'<div class="small">{e(arch["note"])}</div>')
-    w('</section>\n')
+    w(architecture_html(doc["architecture"]))
 
     # Key rule
     rule = doc.get("key_rule")
@@ -245,24 +255,19 @@ def render(doc) -> str:
 
     # Questions
     qs = doc["questions"]
-    code = answer_code(qs)
-    w(f'<section class="card" id="questions"><div><h2>{len(qs)} quick question{"s" if len(qs) > 1 else ""} before we build</h2>'
-      '<p class="sub">Pick the closest answer. “Not sure” is fine; we’ll mark it as a gap.</p>'
-      '<p class="sub"><strong>How to answer:</strong> this page can’t send anything. Click your answers as cards if your '
-      f'chat shows them; otherwise reply in the chat with the question number and letter, e.g. <span class="code">{code}</span>.</p></div>')
+    w(f'<section class="card" id="questions"><div><h2>Questions we need answered before we build</h2>'
+      '<p class="sub">Answer in your own words in the chat. “I don’t know” is a fine answer; we’ll mark it as a gap. '
+      'This page can’t send anything.</p></div><ol class="qs">')
     for i, q in enumerate(qs, 1):
-        w(f'<fieldset><legend>Question {i} of {len(qs)}</legend><div class="q">{i}. {e(q["title"])}</div>'
-          f'<div class="why"><strong>Why we ask:</strong> {e(q["why"])}</div><div class="choices">')
-        for j, c in enumerate(q["choices"]):
-            w(f'<label class="pill"><input type="radio" name="q{i}" value="{e(c)}">'
-              f'<span><b class="ltr">{"ABCD"[j]}</b>{e(c)}</span></label>')
-        w(f'</div><div class="tech">For your tech team: <span class="mono">{e(q["tech"])}</span></div></fieldset>')
-    w('</section>\n')
+        w(f'<li><span class="qn">{i}</span><div class="qb"><div class="q">{e(q["title"])}</div>'
+          f'<div class="why"><strong>Why we ask:</strong> {e(q["why"])}</div>'
+          f'<div class="tech">For your tech team: <span class="mono">{e(q["tech"])}</span></div></div></li>')
+    w('</ol></section>\n')
 
     # Next step
-    w('<section class="next"><div class="dark"><small>I have the details</small><b>Send your answer codes and get the real plan</b>'
+    w('<section class="next"><div class="dark"><small>I have the details</small><b>Answer the questions and get the real plan</b>'
       '<span>You’ll get the workflow, tests and a step-by-step setup guide.</span>'
-      f'<span class="reply">Reply in chat: <span class="mono">{code}</span></span></div>'
+      '<span class="reply">Reply in chat, e.g. <span class="mono">1: … 2: …</span></span></div>'
       '<div class="light"><small>I don’t have them yet</small><b>Make a practice version with sample data</b>'
       '<span>Same pack, but anything unknown is marked <span class="code">TODO</span>. Safe to explore, not for real use.</span>'
       '<span class="reply">Reply in chat: <span class="mono">make a practice version</span></span></div></section>\n')
@@ -270,7 +275,7 @@ def render(doc) -> str:
     # Technical details
     tech = doc.get("technical") or {}
     if tech:
-        w('<details><summary>Technical details for engineers (optional)</summary><div class="card" style="border:0;padding:16px 0 0">')
+        w('<details open><summary>Technical details for engineers</summary><div class="card" style="border:0;padding:16px 0 0">')
         if tech.get("requirements"):
             w('<div class="scroll"><table><thead><tr><th>ID</th><th>Requirement</th><th>Still unknown</th></tr></thead><tbody>')
             for r in tech["requirements"]:
