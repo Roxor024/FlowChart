@@ -145,7 +145,7 @@ Why we ask: [one sentence on the consequence]
 
 | I have the details | I don't have them yet |
 |---|---|
-| Answer the questions in chat. You'll get the real plan: workflow, tests and a step-by-step setup guide. | Say **"make a practice version"**. You'll get the same pack with sample data. Anything unknown is marked `TODO`. Safe to explore, not for real use. |
+| Answer the questions in chat. You'll get an updated page with the settled design, plus any follow-up questions. When nothing is blocking, say **"build it"** for the real workflow, tests and step-by-step setup guide. | Say **"make a practice version"**. You'll get the same pack with sample data. Anything unknown is marked `TODO`. Safe to explore, not for real use. |
 
 ---
 
