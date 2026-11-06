@@ -17,6 +17,18 @@ Measured on the order-status scenario before this change: Quick Design 48 s, pra
   - It writes `evidence/check-pack.txt` with a SHA-256.
 - **`assets/example-blueprint.compact.json`** (6.5 KB, valid, 0 warnings) for the full pack to copy, instead of the 27 KB example.
 - Tests: `tests/test_build_pack_tools.py` and the sample pack in `tests/fixtures/sample-pack/`.
+- **Fixes from the timed order-status run:**
+  - `full-build-pack.md` lists every value the validator accepts (for example, requirement types are only `functional` or `nonfunctional`).
+  - The guide is rendered before the final `check_pack.py` run, so the check also covers `build-guide.html`.
+  - Tip for XML attributes that contain API Management policy expressions: use single quotes.
+  - `azure-docs-example.md` now lists checked Microsoft Learn links for API Management, Table Storage, Key Vault, Event Grid, Blob SFTP and Application Insights. Every build task needs at least one link.
+  - Answering the Quick Design questions now gives an updated Quick Design; "build it" starts the Full Build Pack. The page, template and example say so.
+- **`check_pack.py`** runs the pack's tests under plain `unittest` when pytest isn't installed (as in CI), and treats "no tests found" as a failure. New `--runner` option.
+- **Public release preparation:**
+  - MIT licence (`LICENSE`, plus `LICENSE.txt` inside the skill ZIP).
+  - Public README with install steps for Claude.ai and Claude Code, and a disclaimer.
+  - `docs/SECURITY.md` explains how to report a problem. It no longer claims a CI secret scan that doesn't run.
+  - Removed the early planning notes `docs/PRODUCT-SPEC.md` and `docs/GUIDED-BUILDER-v0.5.md`.
 
 ## 2026-11-04: Quick Design page renderer
 - New `scripts/render_quick_design.py` (standard library only):
