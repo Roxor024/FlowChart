@@ -168,7 +168,9 @@ class CheckPack(PackTestCase):
             "Python compiles": ("function_app/broken.py", "x = (\n"),
             "JSON parses": ("broken.json", "{not json"),
             "No secrets in files": ("notes.txt", 'client_secret = "AbCdEfGhIjKlMnOp1234"'),
-            "Local tests (synthetic data)": ("function_app/tests/test_fail.py", "def test_fails():\n    assert False\n"),
+            "Local tests (synthetic data)": ("function_app/tests/test_fail.py",
+                                             "import unittest\n\n\nclass F(unittest.TestCase):\n"
+                                             "    def test_fails(self):\n        self.fail()\n"),
         }
         for check, (rel, content) in problems.items():
             with self.subTest(check=check):
@@ -178,6 +180,18 @@ class CheckPack(PackTestCase):
                 target.unlink()
                 self.assertEqual(res.returncode, 1, res.stdout)
                 self.assertRegex(res.stdout, rf"{check.replace('(', '[(]').replace(')', '[)]')}\s+FAIL")
+
+    def test_unittest_runner_without_pytest(self):
+        # CI installs only jsonschema, so the pack's tests must also run under plain unittest.
+        res = run(CHECK, self.pack, "--runner", "unittest")
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertRegex(res.stdout, r"Local tests \(synthetic data\)\s+PASS\s+unittest")
+
+    def test_zero_tests_is_a_failure(self):
+        (self.pack / "function_app" / "tests" / "test_intake.py").write_text("def test_plain():\n    pass\n", encoding="utf-8")
+        res = run(CHECK, self.pack, "--runner", "unittest")
+        self.assertEqual(res.returncode, 1, res.stdout)
+        self.assertIn("no tests found", res.stdout)
 
     def test_bad_folder(self):
         self.assertEqual(run(CHECK, self.pack / "missing").returncode, 2)
