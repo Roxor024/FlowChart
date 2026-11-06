@@ -265,8 +265,9 @@ def render(doc) -> str:
     w('</ol></section>\n')
 
     # Next step
-    w('<section class="next"><div class="dark"><small>I have the details</small><b>Answer the questions and get the real plan</b>'
-      '<span>You’ll get the workflow, tests and a step-by-step setup guide.</span>'
+    w('<section class="next"><div class="dark"><small>I have the details</small><b>Answer the questions</b>'
+      '<span>You’ll get an updated page with the settled design, plus any follow-up questions. When nothing is blocking, '
+      'say <span class="mono">build it</span> for the real workflow, tests and step-by-step setup guide.</span>'
       '<span class="reply">Reply in chat, e.g. <span class="mono">1: … 2: …</span></span></div>'
       '<div class="light"><small>I don’t have them yet</small><b>Make a practice version with sample data</b>'
       '<span>Same pack, but anything unknown is marked <span class="code">TODO</span>. Safe to explore, not for real use.</span>'
