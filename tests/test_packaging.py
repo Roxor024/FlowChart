@@ -10,7 +10,8 @@ from pathlib import Path
 
 from _helpers import EXAMPLE, ROOT, SKILL, fresh, renderer
 
-VERSION = "0.4.0"
+VERSION = "0.4.0"   # blueprint schema and script version
+RELEASE = "0.5.0"   # product release (README, SKILL.md, plugin)
 
 
 class SkillPackage(unittest.TestCase):
@@ -45,10 +46,23 @@ class SkillPackage(unittest.TestCase):
         schema = json.loads((SKILL / "assets/integration-blueprint.schema.json").read_text(encoding="utf-8"))
         self.assertEqual(schema["properties"]["schemaVersion"]["const"], VERSION)
         self.assertEqual(EXAMPLE["schemaVersion"], VERSION)
-        for path, needle in ((SKILL / "SKILL.md", "v0.4"), (ROOT / "README.md", "v0.4"),
-                             (ROOT / "CHANGELOG.md", "## 0.4.0"), (SKILL / "scripts/validate_blueprint.py", f'VERSION = "{VERSION}"'),
+        for path, needle in ((SKILL / "SKILL.md", f"v{RELEASE}"), (ROOT / "README.md", f"v{RELEASE}"),
+                             (ROOT / "CHANGELOG.md", f"## {RELEASE}"), (ROOT / "CHANGELOG.md", "## 0.4.0"), (SKILL / "scripts/validate_blueprint.py", f'VERSION = "{VERSION}"'),
                              (SKILL / "scripts/render_report.py", f'VERSION = "{VERSION}"')):
             self.assertIn(needle, path.read_text(encoding="utf-8"), str(path))
+
+    def test_plugin_manifest_and_marketplace(self):
+        plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+        market = json.loads((ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
+        self.assertEqual(plugin["version"], RELEASE)
+        self.assertEqual(plugin["license"], "MIT")
+        for skills_dir in plugin["skills"]:
+            self.assertTrue(skills_dir.startswith("./"), "plugin paths must start with ./")
+            self.assertTrue((ROOT / skills_dir / "flowpilot-architect" / "SKILL.md").is_file(), skills_dir)
+        entry = [p for p in market["plugins"] if p["name"] == plugin["name"]]
+        self.assertEqual(len(entry), 1, "marketplace must list the plugin once")
+        self.assertEqual(entry[0]["source"], "./")
+        self.assertIn(f"/plugin install {plugin['name']}@{market['name']}", (ROOT / "README.md").read_text(encoding="utf-8"))
 
     def test_example_copies_identical(self):
         repo_copy = json.loads((ROOT / "examples/order-processing/integration-blueprint.json").read_text(encoding="utf-8"))
