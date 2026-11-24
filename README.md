@@ -1,4 +1,4 @@
-# FlowPilot v0.4.1
+# FlowPilot v0.5.0
 
 FlowPilot is a free, open-source **Claude Skill that helps you design Azure integrations**: connecting apps such as an ERP, CRM, SAP or Dataverse through Azure services like API Management, Functions, Logic Apps, Service Bus, Event Grid and SFTP.
 
@@ -20,7 +20,14 @@ When you're ready, it can make a **build pack**: a step-by-step guide, starter c
 3. Start a chat and describe your integration, for example: *"Our mobile app needs to show order status from our ERP, which only has a SOAP interface."*
 
 ### Claude Code
-Clone this repository and run `claude` in its root. The skill in `.claude/skills/flowpilot-architect/` is picked up automatically. Try it with the scenario in `examples/order-processing/SCENARIO.md`.
+Install it as a plugin, in any Claude Code session:
+```
+/plugin marketplace add Roxor024/FlowChart
+/plugin install flowpilot@flowpilot
+```
+The skill is then available in every project as `/flowpilot:flowpilot-architect`, and Claude also uses it on its own when you describe an Azure integration.
+
+Or clone this repository and run `claude` in its root: the skill in `.claude/skills/flowpilot-architect/` is picked up automatically. Try it with the scenario in `examples/order-processing/SCENARIO.md`.
 
 ## How a session goes
 1. **Describe the integration.** You get a Quick Design page and up to five plain questions. Answer them in your own words; "I don't know" is fine.

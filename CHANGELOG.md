@@ -1,6 +1,7 @@
 # Changelog
 
-## Unreleased: faster Quick Design and Full Build Pack
+## 0.5.0 — 2026-11-24: faster Quick Design, build pack tools, public release
+- Claude Code plugin: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`, so the repository installs with `/plugin marketplace add Roxor024/FlowChart`.
 Measured on the order-status scenario before this change: Quick Design 48 s, practice version 8 min.
 - **Plain questions.** Quick Design questions are open questions with "Why we ask" and "For your tech team". There are no answer choices, letters, answer codes or clickable cards. The renderer rejects `choices`.
 - **Technical details always included** in Quick Design (required in `quick-design.json`), shown open on the page.

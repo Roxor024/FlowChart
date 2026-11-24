@@ -1,0 +1,24 @@
+{
+  "name": "flowpilot",
+  "displayName": "FlowPilot",
+  "version": "0.5.0",
+  "description": "Azure integration design and reviews (APIM, Functions, Logic Apps, Service Bus, Event Grid, SFTP, ERP/CRM): a beginner-friendly Quick Design, then an optional build pack with guide, code and local tests. Never deploys.",
+  "author": {
+    "name": "Roxor024",
+    "url": "https://github.com/Roxor024"
+  },
+  "homepage": "https://github.com/Roxor024/FlowChart",
+  "repository": "https://github.com/Roxor024/FlowChart",
+  "license": "MIT",
+  "keywords": [
+    "azure",
+    "integration",
+    "architecture",
+    "logic-apps",
+    "service-bus",
+    "api-management"
+  ],
+  "skills": [
+    "./.claude/skills/"
+  ]
+}
